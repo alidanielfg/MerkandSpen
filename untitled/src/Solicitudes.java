@@ -7,7 +7,7 @@ import java.awt.*;
 
 public class Solicitudes{
 
-}//cierre solicitudes    public Solicitudes() {
+  public Solicitudes() {
         crearFormulario();
     }
 
