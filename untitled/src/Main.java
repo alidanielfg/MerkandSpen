@@ -1,8 +1,6 @@
 public class Main {
     public static void main(String[] args) {
 
-
-        Usuarios usuario1 = new Usuarios();
-        Solicitudes usuario = new Solicitudes();
+        NuevoUsuario usuario1 = new NuevoUsuario();
     }
 }//CIERRE MAIN
