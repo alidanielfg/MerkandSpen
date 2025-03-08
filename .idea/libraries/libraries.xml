@@ -3,6 +3,7 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/untitled/.idea/libraries/jgoodies-common-1.8.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/untitled/.idea/libraries/jgoodies-forms-1.9.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../Desktop/UPQ/jfreechart-1.5.3-javadoc.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
