@@ -3,6 +3,8 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class Usuarios {
     private String nombre;
@@ -42,16 +44,84 @@ public class Usuarios {
             this.contrasena = new String(passField.getPassword());
             this.departamento = (String) deptoComboBox.getSelectedItem();
             JOptionPane.showMessageDialog(frame, "Usuario registrado con éxito.");
+
+            // Si el usuario es administrador, mostrar los pedidos
+            if (this.departamento.equals("Departamento 1")) {
+                // Limpiar el panel y mostrar la tabla de pedidos
+                frame.getContentPane().removeAll();
+                mostrarPedidos(frame);
+            }
         });
         builder.add(submitButton, cc.xyw(1, 7, 3));
 
-        frame.add(builder.getPanel());
+        // Panel para formulario de usuario
+        JPanel panelUsuario = new JPanel(new BorderLayout());
+        panelUsuario.add(builder.getPanel(), BorderLayout.CENTER);
+
+        frame.setLayout(new BorderLayout());
+        frame.add(panelUsuario, BorderLayout.CENTER);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
+    private void mostrarPedidos(JFrame frame) {
+        // Crear datos ficticios de pedidos para mostrar en la tabla
+        String[] columnas = {"ID Pedido", "Artículo", "Cantidad", "Estado"};
+        Object[][] datos = {
+                {"001", "Papel", 50, "Pendiente"},
+                {"002", "Lápices", 30, "Pendiente"},
+                {"003", "Tijeras", 20, "Pendiente"}
+        };
+
+        DefaultTableModel modelo = new DefaultTableModel(datos, columnas);
+        JTable tablaPedidos = new JTable(modelo);
+        JScrollPane scrollPane = new JScrollPane(tablaPedidos);
+
+        // Agregar un botón para aprobar o rechazar
+        JPanel panelBotones = new JPanel();
+        JButton aprobarButton = new JButton("Aprobar");
+        JButton rechazarButton = new JButton("Rechazar");
+
+        aprobarButton.addActionListener(e -> {
+            int selectedRow = tablaPedidos.getSelectedRow();
+            if (selectedRow != -1) {
+                modelo.setValueAt("Aprobado", selectedRow, 3); // Cambiar el estado a "Aprobado"
+                JOptionPane.showMessageDialog(frame, "Pedido aprobado.");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Seleccione un pedido para aprobar.");
+            }
+        });
+
+        rechazarButton.addActionListener(e -> {
+            int selectedRow = tablaPedidos.getSelectedRow();
+            if (selectedRow != -1) {
+                modelo.setValueAt("Rechazado", selectedRow, 3); // Cambiar el estado a "Rechazado"
+                JOptionPane.showMessageDialog(frame, "Pedido rechazado.");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Seleccione un pedido para rechazar.");
+            }
+        });
+
+        panelBotones.add(aprobarButton);
+        panelBotones.add(rechazarButton);
+
+        // Organizar la vista con la tabla y los botones
+        JPanel panelPedidos = new JPanel(new BorderLayout());
+        panelPedidos.add(scrollPane, BorderLayout.CENTER);
+        panelPedidos.add(panelBotones, BorderLayout.SOUTH);
+
+        // Agregar los paneles al frame
+        frame.setLayout(new BorderLayout());
+        frame.add(panelPedidos, BorderLayout.CENTER);
+
+        // Actualizar la interfaz
+        frame.revalidate();
+        frame.repaint();
+        frame.pack();
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Usuarios::new);
     }
-}//CIERRE DE USUARIOS
+}

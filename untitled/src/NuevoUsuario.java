@@ -30,11 +30,11 @@ public class NuevoUsuario {
         builder.add(nombreField, cc.xy(3, 1));
 
         builder.addLabel("Contraseña:", cc.xy(1, 3));
-        JTextField passField = new JTextField(20);  // Cambio: JTextField para contraseña visible
+        JPasswordField passField = new JPasswordField(20);
         builder.add(passField, cc.xy(3, 3));
 
         builder.addLabel("Verificar contraseña:", cc.xy(1, 5));
-        JTextField verifyPassField = new JTextField(20);  // Cambio: Añadido campo para verificar contraseña
+        JPasswordField verifyPassField = new JPasswordField(20);
         builder.add(verifyPassField, cc.xy(3, 5));
 
         builder.addLabel("Seleccione su departamento:", cc.xy(1, 7));
@@ -50,16 +50,27 @@ public class NuevoUsuario {
 
         JButton submitButton = new JButton("Registrar usuario");
         submitButton.addActionListener(e -> {
+            String password = new String(passField.getPassword());
+            String verifyPassword = new String(verifyPassField.getPassword());
+
+            if (nombreField.getText().trim().isEmpty() || password.isEmpty() || verifyPassword.isEmpty() ||
+                    deptoComboBox.getSelectedIndex() == 0 || rolComboBox.getSelectedIndex() == 0) {
+                JOptionPane.showMessageDialog(frame, "Todos los campos son obligatorios.");
+                return;
+            }
+
             if (!termsCheckBox.isSelected()) {
                 JOptionPane.showMessageDialog(frame, "Debe aceptar los términos y condiciones.");
                 return;
             }
-            if (!passField.getText().equals(verifyPassField.getText())) {  // Cambio: Validación de que las contraseñas coincidan
+
+            if (!password.equals(verifyPassword)) {
                 JOptionPane.showMessageDialog(frame, "Las contraseñas no coinciden.");
                 return;
             }
+
             this.nombre = nombreField.getText();
-            this.contrasena = passField.getText();
+            this.contrasena = password;
             this.departamento = (String) deptoComboBox.getSelectedItem();
             this.rol = (String) rolComboBox.getSelectedItem();
             JOptionPane.showMessageDialog(frame, "Usuario registrado con éxito.");
@@ -73,6 +84,6 @@ public class NuevoUsuario {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(Usuarios::new);
+        SwingUtilities.invokeLater(NuevoUsuario::new);
     }
 }
