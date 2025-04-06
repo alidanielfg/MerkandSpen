@@ -181,19 +181,52 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_opcionesBoxActionPerformed
 
     private void btnIngresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIngresarActionPerformed
-        String password = new String(txtPassword.getPassword());
-        String departamento = (String)opcionesBox.getSelectedItem();
+        String password = new String(txtPassword.getPassword()).trim();
+    String departamento = (String) opcionesBox.getSelectedItem();
+    
+    // Validación básica
+    if(password.isEmpty()) {
+        JOptionPane.showMessageDialog(this, 
+            "La contraseña no puede estar vacía", 
+            "Validación", JOptionPane.WARNING_MESSAGE);
+        txtPassword.requestFocus();
+        return;
+    }
+    
+    // Autenticación
+    Object[] resultado = Autenticador.autenticar(departamento, password);
+    
+    if(Boolean.TRUE.equals(resultado[0])) {
+        String rol = (String) resultado[1];
+        int userId = (int) resultado[2];
         
-        if(Autenticador.verificarCredenciales(password,departamento)){
-            JOptionPane.showMessageDialog(null, "Acceso concedido", "Éxito",JOptionPane.INFORMATION_MESSAGE);
-            //apertura del siguiente formulario
-            //new MenuPrincipal().setVisible(true);
-            //this.dispose();
-                    }else{
-            JOptionPane.showMessageDialog(null,"Credenciales invalidas", "Error",JOptionPane.ERROR_MESSAGE);
-            txtPassword.setText("");
-            txtPassword.requestFocus();
-        }
+        // Mostrar interfaz según rol
+        abrirInterfazSegunRol(rol, userId, departamento);
+        this.dispose();
+        
+    } else if(Boolean.FALSE.equals(resultado[0])) {
+        JOptionPane.showMessageDialog(this, 
+            "Credenciales incorrectas", 
+            "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+        txtPassword.setText("");
+        txtPassword.requestFocus();
+    }
+    // El caso "error" ya se maneja en la clase Autenticador
+}
+
+private void abrirInterfazSegunRol(String rol, int userId, String departamento) {
+    switch(rol.toLowerCase()) {
+        case "admin":
+            new interfazAdmin().setVisible(true);
+            break;
+        case "usuario":
+            new interfazUsuario().setVisible(true);
+            break;
+        default:
+            JOptionPane.showMessageDialog(this, 
+                "Rol no reconocido: " + rol, 
+                "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_btnIngresarActionPerformed
 
     /**

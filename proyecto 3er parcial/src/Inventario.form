@@ -14,19 +14,14 @@
             <Property name="text" type="java.lang.String" value="Merk and Spen"/>
           </Properties>
         </Menu>
-        <Menu class="javax.swing.JMenu" name="jMenu1">
+        <Menu class="javax.swing.JMenu" name="btnUsuarios">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Usuario"/>
+            <Property name="text" type="java.lang.String" value="Usuarios"/>
           </Properties>
         </Menu>
-        <Menu class="javax.swing.JMenu" name="jMenu2">
+        <Menu class="javax.swing.JMenu" name="btnSolicitudes">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Registro"/>
-          </Properties>
-        </Menu>
-        <Menu class="javax.swing.JMenu" name="jMenu3">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Solicitud"/>
+            <Property name="text" type="java.lang.String" value="Solicitudes"/>
           </Properties>
         </Menu>
       </SubComponents>

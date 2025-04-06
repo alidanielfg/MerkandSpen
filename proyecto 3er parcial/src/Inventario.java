@@ -38,9 +38,8 @@ public class Inventario extends javax.swing.JFrame {
         btnBuscarNombre = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu4 = new javax.swing.JMenu();
-        jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
-        jMenu3 = new javax.swing.JMenu();
+        btnUsuarios = new javax.swing.JMenu();
+        btnSolicitudes = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -82,14 +81,11 @@ public class Inventario extends javax.swing.JFrame {
         jMenu4.setText("Merk and Spen");
         jMenuBar1.add(jMenu4);
 
-        jMenu1.setText("Usuario");
-        jMenuBar1.add(jMenu1);
+        btnUsuarios.setText("Usuarios");
+        jMenuBar1.add(btnUsuarios);
 
-        jMenu2.setText("Registro");
-        jMenuBar1.add(jMenu2);
-
-        jMenu3.setText("Solicitud");
-        jMenuBar1.add(jMenu3);
+        btnSolicitudes.setText("Solicitudes");
+        jMenuBar1.add(btnSolicitudes);
 
         setJMenuBar(jMenuBar1);
 
@@ -227,11 +223,10 @@ public class Inventario extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBuscarNombre;
+    private javax.swing.JMenu btnSolicitudes;
+    private javax.swing.JMenu btnUsuarios;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
