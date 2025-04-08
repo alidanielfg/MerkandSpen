@@ -137,14 +137,17 @@ public class interfazAdmin extends javax.swing.JFrame {
 
     private void btnAdminUsuaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAdminUsuaActionPerformed
         new adminUsuarios().setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnAdminUsuaActionPerformed
 
     private void btnInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventarioActionPerformed
-new Inventario().setVisible(true);        // TODO add your handling code here:
+        new Inventario().setVisible(true);
+        this.dispose();// TODO add your handling code here:
     }//GEN-LAST:event_btnInventarioActionPerformed
 
     private void btnPerfilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPerfilActionPerformed
         new FromPerfil().setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnPerfilActionPerformed
 
     private void btnCierreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCierreActionPerformed

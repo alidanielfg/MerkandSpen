@@ -11,7 +11,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import javax.swing.table.DefaultTableModel;
 import org.jfree.data.category.DefaultCategoryDataset;
 import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
@@ -40,7 +39,7 @@ public class Inventario extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         
         opcionDescarga.setModel(new DefaultComboBoxModel<>(new String[] {
-        "Seleccione un reporte...",
+        "Descargar reporte...",
         "Inventario Completo",
         "Pedidos por Departamento",
         "Pedidos por Fechas"
@@ -303,8 +302,10 @@ private void generarReportePedidosPorFechas() {
         opcionDescarga = new javax.swing.JComboBox<>();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu4 = new javax.swing.JMenu();
-        btnUsuarios = new javax.swing.JMenu();
-        btnSolicitudes = new javax.swing.JMenu();
+        Opciones = new javax.swing.JMenu();
+        btnUsuarios = new javax.swing.JMenuItem();
+        btnPedidos = new javax.swing.JMenuItem();
+        btnVolver = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -356,11 +357,33 @@ private void generarReportePedidosPorFechas() {
         jMenu4.setText("Merk and Spen");
         jMenuBar1.add(jMenu4);
 
-        btnUsuarios.setText("Usuarios");
-        jMenuBar1.add(btnUsuarios);
+        Opciones.setText("Opciones");
 
-        btnSolicitudes.setText("Solicitudes");
-        jMenuBar1.add(btnSolicitudes);
+        btnUsuarios.setText("Administrar Usuario");
+        btnUsuarios.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUsuariosActionPerformed(evt);
+            }
+        });
+        Opciones.add(btnUsuarios);
+
+        btnPedidos.setText("Administrar Pedidos");
+        btnPedidos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPedidosActionPerformed(evt);
+            }
+        });
+        Opciones.add(btnPedidos);
+
+        btnVolver.setText("Regresar");
+        btnVolver.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVolverActionPerformed(evt);
+            }
+        });
+        Opciones.add(btnVolver);
+
+        jMenuBar1.add(Opciones);
 
         setJMenuBar(jMenuBar1);
 
@@ -373,14 +396,14 @@ private void generarReportePedidosPorFechas() {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(31, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(358, 358, 358))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 622, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(txtArticulo)
                             .addComponent(btnBuscarNombre, javax.swing.GroupLayout.DEFAULT_SIZE, 167, Short.MAX_VALUE)
@@ -486,6 +509,25 @@ private void generarReportePedidosPorFechas() {
     opcionDescarga.setSelectedIndex(0);
     }//GEN-LAST:event_opcionDescargaActionPerformed
 
+    private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
+        new FormAdminUsuarios().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnUsuariosActionPerformed
+
+    private void btnPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPedidosActionPerformed
+       new FormAdmiSoli().setVisible(true);
+       this.dispose();
+    }//GEN-LAST:event_btnPedidosActionPerformed
+
+    private void btnVolverActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVolverActionPerformed
+        try {
+            new interfazAdmin().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(Inventario.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.dispose();
+    }//GEN-LAST:event_btnVolverActionPerformed
+
     private void limpiar(){
         txtArticulo.setText("");
     }
@@ -526,9 +568,11 @@ private void generarReportePedidosPorFechas() {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu Opciones;
     private javax.swing.JButton btnBuscarNombre;
-    private javax.swing.JMenu btnSolicitudes;
-    private javax.swing.JMenu btnUsuarios;
+    private javax.swing.JMenuItem btnPedidos;
+    private javax.swing.JMenuItem btnUsuarios;
+    private javax.swing.JMenuItem btnVolver;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar1;
