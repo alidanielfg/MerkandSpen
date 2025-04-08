@@ -74,11 +74,17 @@ public class UserCRUD {
             ps.executeUpdate();
             
             ResultSet keys = ps.getGeneratedKeys();
-            if(keys.next()) return keys.getInt(1);
+            if(keys.next()) {
+                // Notificar que se ha creado un nuevo departamento
+                JOptionPane.showMessageDialog(null, 
+                    "Departamento '" + nombre + "' creado exitosamente", 
+                    "Nuevo departamento", JOptionPane.INFORMATION_MESSAGE);
+                return keys.getInt(1);
+            }
         }
         
         return -1;
-    }
+    } 
 
     private int obtenerIdRol(String nombre) throws SQLException {
         String sql = "SELECT id FROM roles WHERE nombre = ?";
@@ -109,5 +115,5 @@ public class UserCRUD {
         } catch (SQLException e) {
             System.err.println("Error al cerrar conexión: " + e.getMessage());
         }
-    }
+    }//fin cerrar
 }

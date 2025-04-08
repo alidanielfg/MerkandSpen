@@ -1,16 +1,13 @@
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JOptionPane;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
-public class login extends javax.swing.JFrame {
-    //para la lista de departamentos desplegable
-     private static final String[] DEPARTAMENTOS = {
-        "Almacén", 
-        "Compras", 
-        "Producción", 
-        "Logística", 
-        "Recursos humanos"
-    };//fin desplegable
-    
+
+public class login extends javax.swing.JFrame {    
      //constructor del jframe
     public login() {
         initComponents();
@@ -20,16 +17,55 @@ public class login extends javax.swing.JFrame {
     }//fin jframe
 
     private void cargarDepartamentos() {
-        // Limpiar cualquier item existente
-        opcionesBox.removeAllItems();
+        try{
+            // Limpiar cualquier item existente
+            opcionesBox.removeAllItems();
+
+            //Sacar departamentos desde DB
+            List<String> departamentos = obtenerDepartamentosDesdeDB();
+
+            if(departamentos.isEmpty()){
+                JOptionPane.showMessageDialog(null,"No se encontro departamentos en la base de datos","Advertencia",JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            for(String departamento : departamentos){
+                opcionesBox.addItem(departamento);
+            }
+
+            if(departamentos.contains("Almacén")){
+                opcionesBox.setSelectedItem("Almacén");
+            }
+        }catch (SQLException e){
+            JOptionPane.showMessageDialog(null,"Error al cargar departamentos: "+e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//FIN CARGARDEPARTAMENTOS
+    
+    private List<String> obtenerDepartamentosDesdeDB() throws SQLException {
+        List<String> departamentos = new ArrayList<>();
+        Connection conexion = ConexionDB.conectar();
         
-        // Cargar todos los departamentos
-        for(String departamento : DEPARTAMENTOS) {
-            opcionesBox.addItem(departamento);
+        if(conexion == null) {
+            throw new SQLException("No se pudo conectar a la base de datos");
         }
         
-        // Establecer "Almacén" como selección por defecto
-        opcionesBox.setSelectedItem("Almacén");
+        String sql = "SELECT nombre FROM departamentos ORDER BY nombre";
+        try (Statement stmt = conexion.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while(rs.next()) {
+                departamentos.add(rs.getString("nombre"));
+            }
+        } finally {
+            if(conexion != null && !conexion.isClosed()) {
+                conexion.close();
+            }
+        }
+        
+        return departamentos;
+    }
+    
+    public void actualizarListaDepartamentos() {
+        cargarDepartamentos();
     }
     
     private void verificarConexion(){ //Método para realizar la verificacion la conexion de la base de datos a el programa
@@ -53,7 +89,6 @@ public class login extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         btnIngresar = new javax.swing.JButton();
-        btnNuevoUsuario = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         txtPassword = new javax.swing.JPasswordField();
@@ -95,8 +130,6 @@ public class login extends javax.swing.JFrame {
             }
         });
 
-        btnNuevoUsuario.setText("Nuevo Usuario");
-
         jLabel2.setFont(new java.awt.Font("Segoe UI Semibold", 0, 14)); // NOI18N
         jLabel2.setText("Departamento");
 
@@ -121,19 +154,17 @@ public class login extends javax.swing.JFrame {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(66, 66, 66)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(btnIngresar, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(79, 79, 79)
-                        .addComponent(btnNuevoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(75, 75, 75)
+                        .addGap(141, 141, 141)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel3)
                             .addComponent(jLabel2)
                             .addComponent(txtPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                            .addComponent(opcionesBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(opcionesBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(163, 163, 163)
+                        .addComponent(btnIngresar, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -147,11 +178,9 @@ public class login extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnIngresar, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnNuevoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(56, 56, 56))
+                .addGap(38, 38, 38)
+                .addComponent(btnIngresar, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -266,7 +295,6 @@ private void abrirInterfazSegunRol(String rol, int userId, String departamento) 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnIngresar;
-    private javax.swing.JButton btnNuevoUsuario;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

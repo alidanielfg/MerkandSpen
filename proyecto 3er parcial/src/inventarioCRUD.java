@@ -2,10 +2,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
+import org.jfree.data.category.DefaultCategoryDataset;
 
 public class inventarioCRUD {
-        
-    private Connection conexion;
+        private Connection conexion;
     
     public inventarioCRUD(){
         conexion= ConexionDB.conectar();
@@ -27,20 +27,22 @@ public class inventarioCRUD {
         }
     }//fin buscar por nombre
     
-    public ResultSet obtenerProductosMasSolicitados() {
-        String sql = "SELECT a.nombre, SUM(i.stock) as total_stock " +
-                     "FROM articulos a " +
-                     "JOIN inventarios i ON a.id = i.id_articulo " +
-                     "GROUP BY a.nombre " +
-                     "ORDER BY total_stock DESC " +
-                     "LIMIT 5";
-
-        try {
-            PreparedStatement ps = conexion.prepareStatement(sql);
-            return ps.executeQuery();
-        } catch(SQLException e) {
-            System.out.println("Error al obtener productos más solicitados: " + e.getMessage());
-            return null;
+    public DefaultCategoryDataset obtenerTopSolicitudes() throws SQLException{
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        String sql = "SELECT a.nombre, COUNT(s.id) AS solicitudes "+
+                "FROM solicitudes s "+
+                "JOIN articulos a ON s.id_articulo = a.id "+
+                "GROUP BY a.nombre "+
+                "ORDER BY solicitudes DESC "+
+                "LIMIT 5";
+        try(PreparedStatement ps = conexion.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery()){
+            while(rs.next()){
+                dataset.addValue(rs.getInt("solicitudes"),"Solicitudes",rs.getString("nombre"));
+            }
+        }catch (SQLException e){
+            System.out.println("Error al obtener solicitueds: "+ e.getMessage());
         }
+        return dataset;
     }
 }
