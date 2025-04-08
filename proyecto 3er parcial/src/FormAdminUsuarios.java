@@ -24,6 +24,7 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
      */
     public FormAdminUsuarios() {
         initComponents();
+        setLocationRelativeTo(null);
     }
     
     private void eliminarCuenta() {

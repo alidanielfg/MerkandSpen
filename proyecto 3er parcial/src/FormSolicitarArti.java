@@ -15,6 +15,7 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     public FormSolicitarArti() {
         initComponents();
         verificarConexion();
+        setLocationRelativeTo(null);
     }
     
    private void verificarConexion (){

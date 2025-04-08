@@ -5,6 +5,8 @@ import javax.swing.JOptionPane;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class login extends javax.swing.JFrame {    
@@ -246,8 +248,15 @@ public class login extends javax.swing.JFrame {
 private void abrirInterfazSegunRol(String rol, int userId, String departamento) {
     switch(rol.toLowerCase()) {
         case "admin":
-            new interfazAdmin().setVisible(true);
+        {
+            try {
+                new interfazAdmin().setVisible(true);
+            } catch (SQLException ex) {
+                Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
             break;
+
         case "usuario":
             new interfazUsuario().setVisible(true);
             break;

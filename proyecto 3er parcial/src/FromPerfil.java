@@ -25,6 +25,7 @@ public class FromPerfil extends javax.swing.JFrame {
         this.userId = userId;
         this.conexion = ConexionDB.conectar();
         cargarDatosUsuario();
+        setLocationRelativeTo(null);
         
         bloquearCamposNoEditables();
         

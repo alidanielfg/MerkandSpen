@@ -14,6 +14,7 @@ public class FormPedidos extends javax.swing.JFrame {
      */
     public FormPedidos() {
         initComponents();
+        setLocationRelativeTo(null);
     }
 
     /**
@@ -98,7 +99,7 @@ public class FormPedidos extends javax.swing.JFrame {
                     .addComponent(jLabel3)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnMostrar)
                     .addComponent(btnBuscar))
                 .addContainerGap(141, Short.MAX_VALUE))
