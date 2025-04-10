@@ -133,30 +133,24 @@ public class FromPerfil extends javax.swing.JFrame {
     }
     
     
-    private void bloquearCamposNoEditables() {
-    // Hacer los campos no editables
-    txtRol.setEditable(false);
+    private void bloquearCamposNoEditables() {    txtRol.setEditable(false);
     txtDepartamento.setEditable(false);
-    
-    // Bloquear entrada por teclado
+
     txtRol.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
             e.consume();
         }
-        
         @Override
         public void keyTyped(KeyEvent e) {
             e.consume();
         }
-    });
-    
+    });    
     txtDepartamento.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
             e.consume();
-        }
-        
+        }       
         @Override
         public void keyTyped(KeyEvent e) {
             e.consume();
@@ -164,8 +158,6 @@ public class FromPerfil extends javax.swing.JFrame {
     });
     txtRol.setComponentPopupMenu(null);
     txtDepartamento.setComponentPopupMenu(null);
-    
-    // Cambiar el color de fondo para indicar que son de solo lectura
     txtRol.setBackground(new Color(150, 240, 250));
     txtDepartamento.setBackground(new Color(150, 240, 250));
     }
@@ -316,16 +308,16 @@ public class FromPerfil extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(262, Short.MAX_VALUE)
+                .addContainerGap(134, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(253, 253, 253))
+                .addGap(125, 125, 125))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(37, 37, 37)
+                .addGap(27, 27, 27)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
 
         pack();

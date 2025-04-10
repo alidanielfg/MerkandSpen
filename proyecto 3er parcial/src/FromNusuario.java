@@ -32,7 +32,7 @@ public class FromNusuario extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, 
                 "Error al conectar con la base de datos:\n" + e.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1); // Salir si no hay conexión
+            System.exit(1);
         }
     }
      
@@ -66,7 +66,6 @@ public class FromNusuario extends javax.swing.JFrame {
         String contrasena = new String(txtContrasena.getText()).trim();
         String rol = boxRol.getSelectedItem().toString();
 
-        // Validación básica
         if(departamento.isEmpty() || contrasena.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
                 "Todos los campos son obligatorios", 

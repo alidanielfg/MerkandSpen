@@ -231,7 +231,7 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
         int idPedido = (int) jTable1.getValueAt(filaSeleccionada, 0);
         if (actualizarEstatus(idPedido, "Entregado")) {
             JOptionPane.showMessageDialog(this, "Pedido marcado como completado");
-            cargarPedidos(); // Refrescar la tabla
+            cargarPedidos();
         } else {
             JOptionPane.showMessageDialog(this, "Error al completar el pedido", 
                 "Error", JOptionPane.ERROR_MESSAGE);
@@ -241,21 +241,21 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
     private void btnBuscarSoliActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarSoliActionPerformed
          String idPedido = txtSolicitud.getText().trim();
         if (idPedido.isEmpty()) {
-            cargarPedidos(); // Si está vacío, cargar todos
+            cargarPedidos();
             return;
         }
         
         try {
             ResultSet rs = crud.PedidoporID(idPedido);
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            model.setRowCount(0); // Limpiar la tabla
+            model.setRowCount(0);
             
             if (rs.next()) {
                 Object[] row = {
                     rs.getInt("id"),
                     rs.getString("departamento"),
                     rs.getString("articulo"),
-                    "", // Cantidad no está en el ResultSet actual
+                    "",
                     rs.getString("estatus")
                 };
                 model.addRow(row);

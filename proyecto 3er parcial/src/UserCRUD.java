@@ -13,27 +13,22 @@ public class UserCRUD {
     }
 
     public boolean crearUsuario(String departamento, String contrasena, String rol) {
-        try {
-            // Validar conexión
-            if(conexion.isClosed()) {
+        try {if(conexion.isClosed()) {
                 conexion = ConexionDB.conectar();
             }
 
-            // Obtener o crear departamento
             int idDepartamento = obtenerOCrearDepartamento(departamento);
             if(idDepartamento == -1) {
                 JOptionPane.showMessageDialog(null, "Error al procesar el departamento");
                 return false;
             }
 
-            // Obtener ID del rol
             int idRol = obtenerIdRol(rol);
             if(idRol == -1) {
                 JOptionPane.showMessageDialog(null, "Rol no encontrado en la base de datos");
                 return false;
             }
 
-            // Insertar usuario
             String sql = "INSERT INTO usuarios (contraseña, id_departamento, id_rol) VALUES (?, ?, ?)";
             try (PreparedStatement ps = conexion.prepareStatement(sql)) {
                 ps.setString(1, contrasena);
@@ -50,7 +45,7 @@ public class UserCRUD {
     }
 
     private int obtenerOCrearDepartamento(String nombre) throws SQLException {
-        // Buscar departamento existente
+
         String sqlBuscar = "SELECT id FROM departamentos WHERE nombre = ?";
         try (PreparedStatement ps = conexion.prepareStatement(sqlBuscar)) {
             ps.setString(1, nombre);
@@ -58,7 +53,7 @@ public class UserCRUD {
             if(rs.next()) return rs.getInt("id");
         }
 
-        // Crear nuevo departamento si no existe
+        //se crea un departamento si no existe
         String sqlInsert = "INSERT INTO departamentos (nombre) VALUES (?)";
         try (PreparedStatement ps = conexion.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, nombre);
@@ -66,7 +61,6 @@ public class UserCRUD {
             
             ResultSet keys = ps.getGeneratedKeys();
             if(keys.next()) {
-                // Notificar que se ha creado un nuevo departamento
                 JOptionPane.showMessageDialog(null, 
                     "Departamento '" + nombre + "' creado exitosamente", 
                     "Nuevo departamento", JOptionPane.INFORMATION_MESSAGE);

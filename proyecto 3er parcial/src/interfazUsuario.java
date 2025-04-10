@@ -131,15 +131,9 @@ public class interfazUsuario extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         try {
-        // Cerrar la conexión
         crud.cerrar();
-        
-        // Cerrar la ventana
+
         this.dispose();
-        
-        // Opcional: Abrir otra ventana (ej: login)
-        // new InterfazLogin().setVisible(true);
-        
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, 
             "Error al cerrar la aplicación: " + e.getMessage(),

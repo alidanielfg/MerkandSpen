@@ -57,7 +57,7 @@ public class inventarioCRUD {
             System.out.println("Error al obtener los articulos"+e.getMessage());
             return null;
         }
-    }
+    }//FIN OBTENERARTICULO
     
     public ResultSet obtenerInventarioCompleto() {
     String sql = "SELECT a.id, a.nombre, a.descripcion, a.cantidad, i.stock " +
@@ -71,12 +71,13 @@ public class inventarioCRUD {
         System.out.println("Error al obtener inventario completo: " + e.getMessage());
         return null;
     }
-}
+}//OBTIENE EL INVENTARIO COMPLETO
 
     public ResultSet obtenerPedidosPorDepartamento() {
         String sql = "SELECT d.nombre AS departamento, COUNT(p.id) AS cantidad_pedidos " +
                      "FROM pedidos p " +
-                     "JOIN departamentos d ON p.id_departamento = d.id " +
+                     "JOIN usuarios u ON p.id_usuario = u.id " +  // Relación correcta
+                     "JOIN departamentos d ON u.id_departamento = d.id " +  // A través de usuarios
                      "GROUP BY d.nombre " +
                      "ORDER BY cantidad_pedidos DESC";
         try {
@@ -86,14 +87,16 @@ public class inventarioCRUD {
             System.out.println("Error al obtener pedidos por departamento: " + e.getMessage());
             return null;
         }
-    }
+    }//FIN OBTENEMOSLOSPEDIDOSPORDEPARTAMENTO
 
     public ResultSet obtenerPedidosPorFechas(Date fechaInicio, Date fechaFin) {
         String sql = "SELECT p.id, a.nombre AS articulo, d.nombre AS departamento, " +
-                     "p.fecha_solicitud, p.cantidad, p.estado " +
+                     "p.fecha_solicitud, p.cantidad, e.nombre AS estado " +  // Usar e.nombre en lugar de p.estado
                      "FROM pedidos p " +
                      "JOIN articulos a ON p.id_articulo = a.id " +
-                     "JOIN departamentos d ON p.id_departamento = d.id " +
+                     "JOIN usuarios u ON p.id_usuario = u.id " +
+                     "JOIN departamentos d ON u.id_departamento = d.id " +
+                     "JOIN estatus e ON p.id_estatus = e.id " +
                      "WHERE p.fecha_solicitud BETWEEN ? AND ? " +
                      "ORDER BY p.fecha_solicitud";
         try {
@@ -104,6 +107,50 @@ public class inventarioCRUD {
         } catch(SQLException e) {
             System.out.println("Error al obtener pedidos por fechas: " + e.getMessage());
             return null;
+        }
+    }//FIN OBTENER POR FECHAS
+    
+        public boolean eliminarArticulo(int idArticulo) {
+        // Iniciamos transacción para eliminar tanto el artículo como su registro de inventario
+        try {
+            conexion.setAutoCommit(false);
+
+            // 1. Eliminar de inventarios (por la FK)
+            String sqlInventario = "DELETE FROM inventarios WHERE id_articulo = ?";
+            try (PreparedStatement ps = conexion.prepareStatement(sqlInventario)) {
+                ps.setInt(1, idArticulo);
+                ps.executeUpdate();
+            }
+
+            // 2. Eliminar el artículo
+            String sqlArticulo = "DELETE FROM articulos WHERE id = ?";
+            try (PreparedStatement ps = conexion.prepareStatement(sqlArticulo)) {
+                ps.setInt(1, idArticulo);
+                int filasAfectadas = ps.executeUpdate();
+
+                if(filasAfectadas > 0) {
+                    conexion.commit();
+                    return true;
+                }
+            }
+
+            conexion.rollback();
+            return false;
+
+        } catch(SQLException e) {
+            try {
+                conexion.rollback();
+            } catch(SQLException ex) {
+                System.out.println("Error al hacer rollback: " + ex.getMessage());
+            }
+            System.out.println("Error al eliminar artículo: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                conexion.setAutoCommit(true);
+            } catch(SQLException e) {
+                System.out.println("Error al restaurar autocommit: " + e.getMessage());
+            }
         }
     }
 }

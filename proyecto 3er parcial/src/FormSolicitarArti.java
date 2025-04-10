@@ -218,17 +218,15 @@ public class FormSolicitarArti extends javax.swing.JFrame {
                 "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // Obtener ID del artículo seleccionado
+
         int idArticulo = obtenerIdArticulo(articulo);
         if(idArticulo == -1) {
             JOptionPane.showMessageDialog(this, "Error al obtener artículo", 
                 "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        // ID del usuario actual (deberías obtenerlo de la sesión)
-        int idUsuario = 1; // Esto es temporal, debes implementar la gestión de sesión
+
+        int idUsuario = 1;
         
         CRUD crud = new CRUD();
         boolean status = crud.SolicitarArtinombre(idUsuario, idArticulo, cantidad);

@@ -24,7 +24,7 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         return false;
     }
 
-    // Obtener ID de la categoría
+    //Obtener ID de la categoría
     int idCategoria;
     String sqlGetCategoria = "SELECT id FROM categorias WHERE nombre = ?";
     
@@ -34,7 +34,6 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         if (rs.next()) {
             idCategoria = rs.getInt("id");
         } else {
-            // Si la categoría no existe, insertarla
             String sqlInsertCategoria = "INSERT INTO categorias (nombre) VALUES (?)";
             try (PreparedStatement psInsert = conexion.prepareStatement(sqlInsertCategoria, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 psInsert.setString(1, categoria);
@@ -53,9 +52,8 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         return false;
     }
 
-    // Iniciar transacción para asegurar que ambas operaciones se completen
     try {
-        conexion.setAutoCommit(false); // Desactivar autocommit
+        conexion.setAutoCommit(false);
         
         // 1. Insertar el artículo
         String sqlInsert = "INSERT INTO articulos (nombre, descripcion, cantidad, id_categoria) VALUES (?, ?, ?, ?)";
@@ -90,7 +88,7 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         String sqlInsertInventario = "INSERT INTO inventarios (id_articulo, stock) VALUES (?, ?)";
         try (PreparedStatement ps = conexion.prepareStatement(sqlInsertInventario)) {
             ps.setInt(1, idArticulo);
-            ps.setInt(2, Integer.parseInt(cantidad)); // Stock inicial igual a la cantidad
+            ps.setInt(2, Integer.parseInt(cantidad));
             int affectedRows = ps.executeUpdate();
             
             if (affectedRows == 0) {
@@ -99,12 +97,12 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
             }
         }
         
-        conexion.commit(); // Confirmar ambas operaciones
+        conexion.commit();
         return true;
         
     } catch (SQLException e) {
         try {
-            conexion.rollback(); // Revertir en caso de error
+            conexion.rollback();
         } catch (SQLException ex) {
             System.out.println("Error al hacer rollback: " + ex.getMessage());
         }
@@ -112,7 +110,7 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         return false;
     } finally {
         try {
-            conexion.setAutoCommit(true); // Restaurar autocommit
+            conexion.setAutoCommit(true);
         } catch (SQLException e) {
             System.out.println("Error al restaurar autocommit: " + e.getMessage());
         }
@@ -150,12 +148,12 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         return false;
     }
     
-    int idEstatus = 1; // Por defecto "En proceso"
+    int idEstatus = 1;
 
     try {
-        conexion.setAutoCommit(false); // Desactivar autocommit
+        conexion.setAutoCommit(false);
         
-        // 1. Insertar la solicitud con estatus "En proceso"
+        //1. Insertar la solicitud con estatus "En proceso"
         String sqlInsert = "INSERT INTO pedidos (id_usuario, id_articulo, cantidad, id_estatus) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conexion.prepareStatement(sqlInsert)) {
             ps.setInt(1, id_usuario);
@@ -170,18 +168,18 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
             }
         }
         
-        // 2. Actualizar el inventario
+        //2. Actualizar el inventario
         if (!actualizarInventario(id_articulo, cantidadSolicitada)) {
             conexion.rollback();
             return false;
         }
         
-        conexion.commit(); // Confirmar ambas operaciones
+        conexion.commit();
         return true;
         
     } catch (SQLException e) {
         try {
-            conexion.rollback(); // Revertir en caso de error
+            conexion.rollback();
         } catch (SQLException ex) {
             System.out.println("Error al hacer rollback: " + ex.getMessage());
         }
@@ -189,7 +187,7 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         return false;
     } finally {
         try {
-            conexion.setAutoCommit(true); // Restaurar autocommit
+            conexion.setAutoCommit(true);
         } catch (SQLException e) {
             System.out.println("Error al restaurar autocommit: " + e.getMessage());
         }
@@ -211,48 +209,81 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
         }
     }//CIERRE ACTUALIZAR INVENTARIO  
     
- public ResultSet obtenerPedidos(){
-     String sql = "SELECT p.id, d.nombre AS departamento, a.nombre AS articulo, e.nombre AS estatus "+
-             "FROM pedidos p "+
-             "INNER JOIN usuarios u ON p.id_usuario = u.id "+
-             "INNER JOIN departamentos d ON u.id_departamento = d.id "+
-             "INNER JOIN articulos a ON p.id_articulo = a.id "+
-             "LEFT JOIN estatus e ON p.id_estatus = e.id";
+ public ResultSet obtenerPedidos() {
+    String sql = "SELECT p.id, d.nombre AS departamento, a.nombre AS articulo, e.nombre AS estatus " +
+                 "FROM pedidos p " +
+                 "INNER JOIN usuarios u ON p.id_usuario = u.id " +
+                 "INNER JOIN departamentos d ON u.id_departamento = d.id " +
+                 "INNER JOIN articulos a ON p.id_articulo = a.id " +
+                 "LEFT JOIN estatus e ON p.id_estatus = e.id";
      
-     try{
-         PreparedStatement ps= conexion.prepareStatement(sql);
-         return ps.executeQuery();
-     }catch(SQLException e){
-         System.out.println("Error al obtener pedidos: "+e.getMessage());
-         return null;
-     }
- }//FIN LLENAR TABLA
+    try {
+        PreparedStatement ps = conexion.prepareStatement(sql);
+        return ps.executeQuery();
+    } catch(SQLException e) {
+        System.out.println("Error al obtener pedidos: " + e.getMessage());
+        return null;
+    }
+}//FIN LLENAR TABLA
  
- public ResultSet PedidoporID(String idPedido){
-     try{
-         Integer.parseInt(idPedido);
-     }catch(NumberFormatException e){
-         System.out.println("El ID debe ser un numero válido");
-         return null;
-     }
-     String sql = "SELECT p.id, d.nombre AS departamento, a.nombre AS articulo, e.nombre AS estatus "+
-             "FROM pedidos p "+
-             "INNER JOIN usuarios u ON p.id_usuario = u.id "+
-             "INNER JOIN articulos a ON p.id_articulo = a.id "+
-             "INNER JOIN departamentos d ON u.id_departamento = d.id "+
-             "LEFT JOIN estatus e ON p.id_estatus = e.id "+
-             "WHERE p.id = ?";
+ public ResultSet PedidoporID(String idPedido) {
+    try {
+        Integer.parseInt(idPedido);
+    } catch(NumberFormatException e) {
+        System.out.println("El ID debe ser un número válido");
+        return null;
+    }
+    
+    String sql = "SELECT p.id, d.nombre AS departamento, a.nombre AS articulo, e.nombre AS estatus " +
+                 "FROM pedidos p " +
+                 "INNER JOIN usuarios u ON p.id_usuario = u.id " +
+                 "INNER JOIN departamentos d ON u.id_departamento = d.id " +
+                 "INNER JOIN articulos a ON p.id_articulo = a.id " +
+                 "LEFT JOIN estatus e ON p.id_estatus = e.id " +
+                 "WHERE p.id = ?";
      
-     try{
-         PreparedStatement ps= conexion.prepareStatement(sql);
-         ps.setInt(1, Integer.parseInt(idPedido));
-         return ps.executeQuery();
-     }catch(SQLException e){
-         System.out.println("Error al buscar pedido: "+e.getMessage());
-         return null;
-     }
- }//CIERRE PEDIDOSPORID
+    try {
+        PreparedStatement ps = conexion.prepareStatement(sql);
+        ps.setInt(1, Integer.parseInt(idPedido));
+        return ps.executeQuery();
+    } catch(SQLException e) {
+        System.out.println("Error al buscar pedido: " + e.getMessage());
+        return null;
+    }
+}//CIERRE PEDIDOSPORID
  
- 
-   
+    public ResultSet obtenerPedidosPorUsuario(int idUsuario) {
+        String sql = "SELECT p.id, d.nombre AS departamento, a.nombre AS articulo, p.cantidad, e.nombre AS estatus " +
+                     "FROM pedidos p " +
+                     "INNER JOIN usuarios u ON p.id_usuario = u.id " +
+                     "INNER JOIN departamentos d ON u.id_departamento = d.id " +
+                     "INNER JOIN articulos a ON p.id_articulo = a.id " +
+                     "LEFT JOIN estatus e ON p.id_estatus = e.id " +
+                     "WHERE p.id_usuario = ?";
+
+        try {
+            PreparedStatement ps = conexion.prepareStatement(sql);
+            ps.setInt(1, idUsuario);
+            return ps.executeQuery();
+        } catch(SQLException e) {
+            System.out.println("Error al obtener pedidos por usuario: " + e.getMessage());
+            return null;
+        }
+    }//FIN PEDIDOSPORUSUARIO
+
+    // Método para obtener el ID de departamento de un usuario
+    public int obtenerIdDepartamentoUsuario(int idUsuario) {
+        String sql = "SELECT id_departamento FROM usuarios WHERE id = ?";
+
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id_departamento");
+            }
+        } catch(SQLException e) {
+            System.out.println("Error al obtener departamento del usuario: " + e.getMessage());
+        }
+        return -1;
+    }//FIN OIDU
 }

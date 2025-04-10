@@ -1,13 +1,10 @@
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 public class FormAdminUsuarios extends javax.swing.JFrame {
     
-    private int userId; // ID del usuario actual
+    private int userId;
     private Connection conexion;
     private DefaultTableModel modeloTabla;
 
@@ -22,11 +19,11 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         modeloTabla = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Hacer que la tabla no sea editable
+                return false;
             }
         };
         
-        // Configurar columnas
+        //Configurar columnas
         modeloTabla.addColumn("ID");
         modeloTabla.addColumn("Departamento");
         modeloTabla.addColumn("Rol");
@@ -41,10 +38,8 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         }
         
         try {
-            // Limpiar tabla antes de cargar nuevos datos
             modeloTabla.setRowCount(0);
-            
-            // Consulta para obtener usuarios con sus departamentos y roles
+
             String sql = "SELECT u.id, d.nombre AS departamento, r.nombre AS rol " +
                          "FROM usuarios u " +
                          "LEFT JOIN departamentos d ON u.id_departamento = d.id " +
@@ -82,14 +77,13 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         try {
             int idUsuario = Integer.parseInt(idTexto);
             
-            // Verificar si el usuario existe
+            //verifica si existe usuario
             if (!usuarioExiste(idUsuario)) {
                 JOptionPane.showMessageDialog(this, "No existe un usuario con ID " + idUsuario, 
                     "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
-            // Confirmar eliminación
+
             int confirmacion = JOptionPane.showConfirmDialog(
                 this, 
                 "¿Está seguro de eliminar al usuario con ID " + idUsuario + "?", 

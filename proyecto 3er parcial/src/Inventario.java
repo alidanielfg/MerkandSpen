@@ -110,26 +110,22 @@ public class Inventario extends javax.swing.JFrame {
     
 private void generarReporteInventarioCompleto() {
     try {
-        // Crear documento PDF
         Document document = new Document();
         String fileName = "reporte_inventario_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".pdf";
         PdfWriter.getInstance(document, new FileOutputStream(fileName));
         
         document.open();
-        
-        // Título del documento
+
         Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
         Paragraph title = new Paragraph("Reporte de Inventario Completo", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
         
-        document.add(new Paragraph(" ")); // Espacio en blanco
-        
-        // Crear tabla
-        PdfPTable table = new PdfPTable(5); // 5 columnas
+        document.add(new Paragraph(" "));
+
+        PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
-        
-        // Encabezados de la tabla
+
         String[] headers = {"ID", "Nombre", "Descripción", "Cantidad", "Stock"};
         for (String header : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(header));
@@ -137,10 +133,10 @@ private void generarReporteInventarioCompleto() {
             table.addCell(cell);
         }
         
-        // Obtener datos
+            //Obtener los datos para la tabla
         ResultSet resultados = crud.obtenerInventarioCompleto();
         
-        // Llenar tabla con datos
+        //Llenamos los datos a la tabla
         while (resultados != null && resultados.next()) {
             table.addCell(String.valueOf(resultados.getInt("id")));
             table.addCell(resultados.getString("nombre"));
@@ -212,7 +208,6 @@ private void generarReportePedidosPorDepartamento() {
 }
 
 private void generarReportePedidosPorFechas() {
-    // Pedir fechas al usuario
     JTextField fechaInicioField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
     JTextField fechaFinField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
     
@@ -243,8 +238,7 @@ private void generarReportePedidosPorFechas() {
         Paragraph title = new Paragraph("Reporte de Pedidos por Fechas", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
-        
-        // Subtítulo con rango de fechas
+
         Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
         Paragraph subTitle = new Paragraph(
             "Del " + sdf.format(fechaInicio) + " al " + sdf.format(fechaFin), subTitleFont);
@@ -300,6 +294,7 @@ private void generarReportePedidosPorFechas() {
         btnBuscarNombre = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         opcionDescarga = new javax.swing.JComboBox<>();
+        btnEliminar = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu4 = new javax.swing.JMenu();
         Opciones = new javax.swing.JMenu();
@@ -349,6 +344,13 @@ private void generarReportePedidosPorFechas() {
         opcionDescarga.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 opcionDescargaActionPerformed(evt);
+            }
+        });
+
+        btnEliminar.setText("Eliminar Articulo");
+        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarActionPerformed(evt);
             }
         });
 
@@ -407,7 +409,8 @@ private void generarReportePedidosPorFechas() {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(txtArticulo)
                             .addComponent(btnBuscarNombre, javax.swing.GroupLayout.DEFAULT_SIZE, 167, Short.MAX_VALUE)
-                            .addComponent(opcionDescarga, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(opcionDescarga, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnEliminar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(43, 43, 43))))
         );
         layout.setVerticalGroup(
@@ -423,7 +426,9 @@ private void generarReportePedidosPorFechas() {
                         .addComponent(btnBuscarNombre)
                         .addGap(18, 18, 18)
                         .addComponent(opcionDescarga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 111, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addComponent(btnEliminar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
@@ -504,8 +509,7 @@ private void generarReportePedidosPorFechas() {
             generarReportePedidosPorFechas();
             break;
     }
-    
-    // Resetear la selección
+
     opcionDescarga.setSelectedIndex(0);
     }//GEN-LAST:event_opcionDescargaActionPerformed
 
@@ -527,6 +531,50 @@ private void generarReportePedidosPorFechas() {
         }
         this.dispose();
     }//GEN-LAST:event_btnVolverActionPerformed
+
+    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
+        // 1. Obtener la fila seleccionada
+    int filaSeleccionada = jTable1.getSelectedRow();
+    
+    // 2. Validar que haya una fila seleccionada
+    if(filaSeleccionada == -1) {
+        JOptionPane.showMessageDialog(this, 
+            "Por favor seleccione un artículo para eliminar", 
+            "Advertencia", 
+            JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    // 3. Obtener el ID del artículo seleccionado
+    int idArticulo = (int) jTable1.getValueAt(filaSeleccionada, 0);
+    String nombreArticulo = (String) jTable1.getValueAt(filaSeleccionada, 1);
+    
+    // 4. Confirmar con el usuario
+    int confirmacion = JOptionPane.showConfirmDialog(this, 
+        "¿Está seguro que desea eliminar el artículo: " + nombreArticulo + "?", 
+        "Confirmar Eliminación", 
+        JOptionPane.YES_NO_OPTION);
+    
+    if(confirmacion != JOptionPane.YES_OPTION) {
+        return;
+    }
+    
+    // 5. Intentar eliminar
+    if(crud.eliminarArticulo(idArticulo)) {
+        JOptionPane.showMessageDialog(this, 
+            "Artículo eliminado correctamente", 
+            "Éxito", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // Actualizar la tabla
+        LlenarTabla();
+    } else {
+        JOptionPane.showMessageDialog(this, 
+            "Error al eliminar el artículo", 
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void limpiar(){
         txtArticulo.setText("");
@@ -570,6 +618,7 @@ private void generarReportePedidosPorFechas() {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu Opciones;
     private javax.swing.JButton btnBuscarNombre;
+    private javax.swing.JButton btnEliminar;
     private javax.swing.JMenuItem btnPedidos;
     private javax.swing.JMenuItem btnUsuarios;
     private javax.swing.JMenuItem btnVolver;

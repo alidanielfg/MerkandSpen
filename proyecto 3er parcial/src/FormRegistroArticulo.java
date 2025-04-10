@@ -12,7 +12,7 @@ public class FormRegistroArticulo extends javax.swing.JFrame {
     public FormRegistroArticulo() {
         initComponents();
         setLocationRelativeTo(null);
-        cargarCategorias(); // Cargar categorías al iniciar
+        cargarCategorias();
     }
 
     private void cargarCategorias() {

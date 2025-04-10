@@ -19,79 +19,92 @@ public class FormPedidos extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
     
-    private void iniTabla(){
-        modeloTabla = new DefaultTableModel(){
-            @Override
-            public boolean isCellEditable(int row, int column){
-                return false;
-            }//FIN BOOLEAN
-            @Override
-            public Class<?>getColumnClass(int columnIndex){
-                switch (columnIndex){
-                    case 0: return Integer.class;
-                    default: return String.class;
-                }
+    private void iniTabla() {
+    modeloTabla = new DefaultTableModel() {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+        @Override
+        public Class<?> getColumnClass(int columnIndex) {
+            return columnIndex == 0 ? Integer.class : String.class;
+        }
+    };
+    
+    modeloTabla.addColumn("ID");
+    modeloTabla.addColumn("Departamento");
+    modeloTabla.addColumn("Artículo");
+    modeloTabla.addColumn("Estatus");
+    
+    jTable1.setModel(modeloTabla);
+}
+    
+private void cargaPedidos() {
+    modeloTabla.setRowCount(0);
+    ResultSet rs = crud.obtenerPedidos();
+    
+    if(rs != null) {
+        try {
+            while(rs.next()) {
+                Object[] fila = {
+                    rs.getInt("id"),
+                    rs.getString("departamento"),
+                    rs.getString("articulo"),
+                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
+                };
+                modeloTabla.addRow(fila);
             }
-        };
-        
-        modeloTabla.addColumn("ID");
-        modeloTabla.addColumn("Departamento");
-        modeloTabla.addColumn("Artículo");
-        modeloTabla.addColumn("Estatus");
-        
-        jTable1.setModel(modeloTabla);
+        } catch(SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al leer datos: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if(rs != null) rs.close();
+            } catch(SQLException e) {
+                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
+            }
+        }
+    }
+}//FIN CARGAR PEDIDOS
+    
+    private void buscarPedido() {
+    String idPedido = txtIdPedido.getText().trim();
+    if(idPedido.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Ingrese un ID de pedido", 
+            "Advertencia", JOptionPane.WARNING_MESSAGE);
+        return;
     }
     
-    private void cargaPedidos(){
-        modeloTabla.setRowCount(0);
-        ResultSet rs = crud.obtenerPedidos();
-        
-        if(rs != null){
-            try{
-                while(rs.next()){
-                    Object[] fila = {
-                        rs.getInt("id"),
-                        rs.getString("departamento"),
-                        rs.getString("articulo"),
-                        rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
-                    };
-                    modeloTabla.addRow(fila);
-                }//CIERRE WHILE
-            }catch(SQLException e){
-                JOptionPane.showMessageDialog(null,"Error al leer datos: "+ e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
-            }//CIERRE TRY Y CATCH
-        }
-    }//CIERRE CARGARPEDIDOS
+    modeloTabla.setRowCount(0);
+    ResultSet rs = crud.PedidoporID(idPedido);
     
-    private void buscarPedido(){
-        String idPedido = txtIdPedido.getText().trim();
-        if(idPedido.isEmpty()){
-            JOptionPane.showMessageDialog(null,"Ingrese un ID de pedido","Advertencia",JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        modeloTabla.setRowCount(0);
-        ResultSet rs = crud.PedidoporID(idPedido);
-        
-        if(rs != null){
-            try{
-                if(rs.next()){
-                    Object[] fila ={
-                        rs.getInt("id"),
-                        rs.getString("departamento"),
-                        rs.getString("articulo"),
-                        rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
-                    };//FIN OBJECT
-                }//CIERRE IF
-                else{
-                    JOptionPane.showMessageDialog(null,"No se encontró el pedido con ID: "+idPedido,"Información",JOptionPane.INFORMATION_MESSAGE);
-                }//FIN ELSE
-            }catch(SQLException e){
-                JOptionPane.showMessageDialog(null,"Error al leer datos: "+e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+    if(rs != null) {
+        try {
+            if(rs.next()) {
+                Object[] fila = {
+                    rs.getInt("id"),
+                    rs.getString("departamento"),
+                    rs.getString("articulo"),
+                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
+                };
+                modeloTabla.addRow(fila);
+            } else {
+                JOptionPane.showMessageDialog(null, 
+                    "No se encontró el pedido con ID: " + idPedido, 
+                    "Información", JOptionPane.INFORMATION_MESSAGE);
             }
-        }//CIERRE IF
-    }//FIN BUSCARPEDIDO
-    
+        } catch(SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al leer datos: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if(rs != null) rs.close();
+            } catch(SQLException e) {
+                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
+            }
+        }
+    }
+}
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -129,6 +142,11 @@ public class FormPedidos extends javax.swing.JFrame {
         jScrollPane1.setViewportView(jTable1);
 
         btnBuscar.setText("Buscar");
+        btnBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBuscarActionPerformed(evt);
+            }
+        });
 
         jLabel3.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         jLabel3.setText("Id pedido:");
@@ -198,6 +216,69 @@ public class FormPedidos extends javax.swing.JFrame {
         }
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
+
+    private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
+    String idPedido = txtIdPedido.getText().trim();
+
+    if(idPedido.isEmpty()) {
+        JOptionPane.showMessageDialog(this, 
+            "Por favor ingrese un ID de pedido", 
+            "Campo vacío", 
+            JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    try {
+        Integer.parseInt(idPedido);
+    } catch(NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, 
+            "El ID debe ser un número válido", 
+            "ID inválido", 
+            JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+ 
+    modeloTabla.setRowCount(0);
+    
+
+    ResultSet rs = crud.PedidoporID(idPedido);
+    
+    if(rs != null) {
+        try {
+            if(rs.next()) {
+                // Agregar el pedido encontrado a la tabla de la DB
+                Object[] fila = {
+                    rs.getInt("id"),
+                    rs.getString("departamento"),
+                    rs.getString("articulo"),
+                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
+                };
+                modeloTabla.addRow(fila);
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "No se encontró ningún pedido con ID: " + idPedido, 
+                    "Pedido no encontrado", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch(SQLException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al leer datos: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        } finally {
+            try {
+                if(rs != null) rs.close();
+            } catch(SQLException e) {
+                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
+            }
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, 
+            "Error al realizar la búsqueda", 
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_btnBuscarActionPerformed
 
     /**
      * @param args the command line arguments
