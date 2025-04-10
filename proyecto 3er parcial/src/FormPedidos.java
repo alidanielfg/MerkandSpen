@@ -1,6 +1,8 @@
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class FormPedidos extends javax.swing.JFrame {
@@ -104,7 +106,6 @@ public class FormPedidos extends javax.swing.JFrame {
         btnRegresar = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
 
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 18)); // NOI18N
         jLabel1.setText("Adminstración de usuarios");
@@ -141,9 +142,6 @@ public class FormPedidos extends javax.swing.JFrame {
 
         jMenu1.setText("Merk and Spen");
         jMenuBar1.add(jMenu1);
-
-        jMenu2.setText("Edit");
-        jMenuBar1.add(jMenu2);
 
         setJMenuBar(jMenuBar1);
 
@@ -193,7 +191,11 @@ public class FormPedidos extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        new interfazUsuario().setVisible(true);
+        try {
+            new interfazUsuario().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FormPedidos.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
 
@@ -239,7 +241,6 @@ public class FormPedidos extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;

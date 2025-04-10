@@ -1,18 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
-/**
- *
- * @author alida
- */
 public class interfazUsuario extends javax.swing.JFrame {
+    private UserCRUD crud;
 
-    /**
-     * Creates new form interfazUsuario
-     */
-    public interfazUsuario() {
+    
+    public interfazUsuario() throws SQLException {
+        crud = new UserCRUD();
         initComponents();
         setLocationRelativeTo(null);
     }
@@ -28,6 +24,7 @@ public class interfazUsuario extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         btnVerInventario = new javax.swing.JButton();
         btnSolicitar = new javax.swing.JButton();
         btnVerPedidos = new javax.swing.JButton();
@@ -39,19 +36,30 @@ public class interfazUsuario extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI", 2, 24)); // NOI18N
         jLabel1.setText("Bienvenid@ a Merk and Spen");
 
+        jButton1.setText("Cerrar Sesión");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap(152, Short.MAX_VALUE)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 323, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(144, 144, 144))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jButton1))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(39, 39, 39)
+                .addComponent(jButton1)
+                .addGap(16, 16, 16)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(45, Short.MAX_VALUE))
         );
@@ -89,7 +97,7 @@ public class interfazUsuario extends javax.swing.JFrame {
                 .addComponent(btnVerInventario, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(btnVerPedidos, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(31, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -112,7 +120,7 @@ public class interfazUsuario extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSolicitarActionPerformed
 
     private void btnVerInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerInventarioActionPerformed
-        new InventarioUsu().setVisible(true);
+        new InventarioUsua().setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnVerInventarioActionPerformed
 
@@ -120,6 +128,27 @@ public class interfazUsuario extends javax.swing.JFrame {
         new FormPedidos().setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnVerPedidosActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+        // Cerrar la conexión
+        crud.cerrar();
+        
+        // Cerrar la ventana
+        this.dispose();
+        
+        // Opcional: Abrir otra ventana (ej: login)
+        // new InterfazLogin().setVisible(true);
+        
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, 
+            "Error al cerrar la aplicación: " + e.getMessage(),
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
+    }
+    
+    new login().setVisible(true);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -151,7 +180,11 @@ public class interfazUsuario extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new interfazUsuario().setVisible(true);
+                try {
+                    new interfazUsuario().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
@@ -160,6 +193,7 @@ public class interfazUsuario extends javax.swing.JFrame {
     private javax.swing.JButton btnSolicitar;
     private javax.swing.JButton btnVerInventario;
     private javax.swing.JButton btnVerPedidos;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     // End of variables declaration//GEN-END:variables

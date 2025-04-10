@@ -190,11 +190,6 @@ public class FromPerfil extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
-        jMenu5 = new javax.swing.JMenu();
-        jMenu6 = new javax.swing.JMenu();
-        jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        jMenu7 = new javax.swing.JMenu();
 
         jMenuItem1.setText("jMenuItem1");
 
@@ -204,7 +199,7 @@ public class FromPerfil extends javax.swing.JFrame {
         jMenu4.setText("Edit");
         jMenuBar2.add(jMenu4);
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -314,20 +309,6 @@ public class FromPerfil extends javax.swing.JFrame {
         jMenu1.setText("Merk and Spen");
         jMenuBar1.add(jMenu1);
 
-        jMenu2.setText("Registro");
-        jMenuBar1.add(jMenu2);
-
-        jMenu5.setText("Inventario");
-        jMenuBar1.add(jMenu5);
-
-        jMenu6.setText("Solicitud");
-        jMenu6.add(jSeparator1);
-
-        jMenuBar1.add(jMenu6);
-
-        jMenu7.setText("Perfil");
-        jMenuBar1.add(jMenu7);
-
         setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -409,17 +390,12 @@ public class FromPerfil extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
-    private javax.swing.JMenu jMenu5;
-    private javax.swing.JMenu jMenu6;
-    private javax.swing.JMenu jMenu7;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuBar jMenuBar2;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTextField txtContrasena;
     private javax.swing.JTextField txtDepartamento;

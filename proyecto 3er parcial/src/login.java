@@ -258,8 +258,15 @@ private void abrirInterfazSegunRol(String rol, int userId, String departamento) 
             break;
 
         case "usuario":
-            new interfazUsuario().setVisible(true);
+        {
+            try {
+                new interfazUsuario().setVisible(true);
+            } catch (SQLException ex) {
+                Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
             break;
+
         default:
             JOptionPane.showMessageDialog(this, 
                 "Rol no reconocido: " + rol, 

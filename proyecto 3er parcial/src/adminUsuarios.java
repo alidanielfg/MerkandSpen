@@ -30,7 +30,6 @@ public class adminUsuarios extends javax.swing.JFrame {
         jMenu1 = new javax.swing.JMenu();
         btnNuevoUsu = new javax.swing.JMenuItem();
         btnEliminarUsu = new javax.swing.JMenuItem();
-        btnModificarUsu = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -53,10 +52,6 @@ public class adminUsuarios extends javax.swing.JFrame {
             }
         });
         jMenu1.add(btnEliminarUsu);
-
-        btnModificarUsu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/lapiz-de-usuario.png"))); // NOI18N
-        btnModificarUsu.setText("Modificar Usuario");
-        jMenu1.add(btnModificarUsu);
 
         jMenuBar1.add(jMenu1);
 
@@ -121,7 +116,6 @@ public class adminUsuarios extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem btnEliminarUsu;
-    private javax.swing.JMenuItem btnModificarUsu;
     private javax.swing.JMenuItem btnNuevoUsu;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;

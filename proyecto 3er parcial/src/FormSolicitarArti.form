@@ -28,9 +28,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="btnPerfil">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/iconos/lapiz-de-usuario.png"/>
+                  <Image iconType="3" name="/iconos/deshacer.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Perfil"/>
+                <Property name="text" type="java.lang.String" value="Regresar"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnPerfilActionPerformed"/>

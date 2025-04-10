@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class FormSolicitarArti extends javax.swing.JFrame {
@@ -131,8 +133,8 @@ public class FormSolicitarArti extends javax.swing.JFrame {
         });
         jMenu6.add(btnInventario);
 
-        btnPerfil.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/lapiz-de-usuario.png"))); // NOI18N
-        btnPerfil.setText("Perfil");
+        btnPerfil.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/deshacer.png"))); // NOI18N
+        btnPerfil.setText("Regresar");
         btnPerfil.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPerfilActionPerformed(evt);
@@ -280,12 +282,16 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     }//GEN-LAST:event_btnPedirArtiActionPerformed
 
     private void btnInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventarioActionPerformed
-       new InventarioUsu().setVisible(true);
+       new InventarioUsua().setVisible(true);
        this.dispose();
     }//GEN-LAST:event_btnInventarioActionPerformed
 
     private void btnPerfilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPerfilActionPerformed
-        new interfazUsuario().setVisible(true);
+        try {
+            new interfazUsuario().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FormSolicitarArti.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnPerfilActionPerformed
 

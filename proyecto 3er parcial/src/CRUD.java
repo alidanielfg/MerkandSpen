@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 public class CRUD {
-    private Connection conexion;
+    Connection conexion;
     public CRUD() {
         conexion = ConexionDB.conectar();
     
@@ -251,6 +251,8 @@ public boolean RegistrarArticulo(String nombre, String descripcion, String canti
          System.out.println("Error al buscar pedido: "+e.getMessage());
          return null;
      }
- }
+ }//CIERRE PEDIDOSPORID
+ 
+ 
    
 }
