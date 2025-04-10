@@ -57,6 +57,11 @@ public class interfazUsuario extends javax.swing.JFrame {
         );
 
         btnVerInventario.setText("Ver Inventario");
+        btnVerInventario.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVerInventarioActionPerformed(evt);
+            }
+        });
 
         btnSolicitar.setText("Solicitar Artículo");
         btnSolicitar.addActionListener(new java.awt.event.ActionListener() {
@@ -66,6 +71,11 @@ public class interfazUsuario extends javax.swing.JFrame {
         });
 
         btnVerPedidos.setText("Ver Pedidos");
+        btnVerPedidos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVerPedidosActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -100,6 +110,16 @@ public class interfazUsuario extends javax.swing.JFrame {
         new FormSolicitarArti().setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnSolicitarActionPerformed
+
+    private void btnVerInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerInventarioActionPerformed
+        new InventarioUsu().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnVerInventarioActionPerformed
+
+    private void btnVerPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerPedidosActionPerformed
+        new FormPedidos().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnVerPedidosActionPerformed
 
     /**
      * @param args the command line arguments

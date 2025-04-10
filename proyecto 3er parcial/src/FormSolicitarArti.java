@@ -5,23 +5,79 @@
 
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
 public class FormSolicitarArti extends javax.swing.JFrame {
 
     private CRUD crud;
     
-    
     public FormSolicitarArti() {
         initComponents();
         verificarConexion();
         setLocationRelativeTo(null);
+        cargarArticulos();
     }
     
-   private void verificarConexion (){
-    
-        Connection conexion = ConexionDB.conectar();
+    private void cargarArticulos() {
+        comboArticulos.removeAllItems();
+        comboArticulos.addItem("-- Seleccione un artículo --");
+        
+        Connection conexion = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        try {
+            conexion = ConexionDB.conectar();
+            if(conexion == null) {
+                JOptionPane.showMessageDialog(this, "No hay conexión a la base de datos", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String sql = "SELECT id, nombre FROM articulos ORDER BY nombre";
+            ps = conexion.prepareStatement(sql);
+            rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                comboArticulos.addItem(rs.getString("nombre"));
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar artículos: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conexion != null) conexion.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
+    
+    private void verificarConexion() {
+        Connection conexion = null;
+        try {
+            conexion = ConexionDB.conectar();
+            if(conexion == null) {
+                JOptionPane.showMessageDialog(this, "No se pudo establecer conexión con la base de datos", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } finally {
+            if (conexion != null) {
+                try {
+                    conexion.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -30,12 +86,11 @@ public class FormSolicitarArti extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel3 = new javax.swing.JLabel();
-        txtArticulo = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         txtCantidad = new javax.swing.JTextField();
         btnPedirArti = new javax.swing.JButton();
+        comboArticulos = new javax.swing.JComboBox<>();
         jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
         jMenu6 = new javax.swing.JMenu();
         btnInventario = new javax.swing.JMenuItem();
         btnPerfil = new javax.swing.JMenuItem();
@@ -51,7 +106,7 @@ public class FormSolicitarArti extends javax.swing.JFrame {
         jLabel2.setFont(new java.awt.Font("Yu Gothic UI Semibold", 1, 14)); // NOI18N
         jLabel2.setText("Cantidad:");
 
-        btnPedirArti.setBackground(new java.awt.Color(38, 38, 38));
+        btnPedirArti.setBackground(new java.awt.Color(76, 84, 89));
         btnPedirArti.setFont(new java.awt.Font("Yu Gothic UI Semibold", 1, 14)); // NOI18N
         btnPedirArti.setForeground(new java.awt.Color(255, 255, 255));
         btnPedirArti.setText("Pedir Articulo");
@@ -61,10 +116,9 @@ public class FormSolicitarArti extends javax.swing.JFrame {
             }
         });
 
-        jMenuBar1.setBackground(new java.awt.Color(76, 84, 89));
+        comboArticulos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        jMenu1.setText("Merk and Spen");
-        jMenuBar1.add(jMenu1);
+        jMenuBar1.setBackground(new java.awt.Color(76, 84, 89));
 
         jMenu6.setText("Merk and Spen");
 
@@ -109,12 +163,12 @@ public class FormSolicitarArti extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel2)
-                            .addComponent(txtArticulo, javax.swing.GroupLayout.PREFERRED_SIZE, 413, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3)))
+                            .addComponent(jLabel3)
+                            .addComponent(comboArticulos, javax.swing.GroupLayout.PREFERRED_SIZE, 388, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(215, 215, 215)
                         .addComponent(btnPedirArti)))
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addContainerGap(89, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -125,9 +179,9 @@ public class FormSolicitarArti extends javax.swing.JFrame {
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtArticulo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(comboArticulos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -140,33 +194,89 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnPedirArtiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPedirArtiActionPerformed
-
-        String Articulo = txtArticulo.getText();
-        String Cantidad = txtCantidad.getText();
-        
-        if(Articulo.isEmpty() || Cantidad.isEmpty()){
-            JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios", "Error", JOptionPane.INFORMATION_MESSAGE);
+        if(comboArticulos.getSelectedIndex() <= 0) {
+        JOptionPane.showMessageDialog(this, "Debe seleccionar un artículo", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    String articulo = comboArticulos.getSelectedItem().toString();
+    String cantidad = txtCantidad.getText().trim();
+    
+    if(cantidad.isEmpty()){
+        JOptionPane.showMessageDialog(this, "La cantidad es obligatoria", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    try {
+        int cant = Integer.parseInt(cantidad);
+        if(cant <= 0) {
+            JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a cero", 
+                "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    CRUD crud= new CRUD();
-        boolean status=crud.SolicitarArtinombre(Articulo, Cantidad);
         
-        if (status){
-         JOptionPane.showMessageDialog(this, "Articulo Solicitado Correctamente ", "Exito", JOptionPane.INFORMATION_MESSAGE);
+        // Obtener ID del artículo seleccionado
+        int idArticulo = obtenerIdArticulo(articulo);
+        if(idArticulo == -1) {
+            JOptionPane.showMessageDialog(this, "Error al obtener artículo", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        else {
-            JOptionPane.showMessageDialog(this, "No se solicito correctamente el articulo", "Error", JOptionPane.INFORMATION_MESSAGE);
+        
+        // ID del usuario actual (deberías obtenerlo de la sesión)
+        int idUsuario = 1; // Esto es temporal, debes implementar la gestión de sesión
+        
+        CRUD crud = new CRUD();
+        boolean status = crud.SolicitarArtinombre(idUsuario, idArticulo, cantidad);
+        
+        if (status) {
+            JOptionPane.showMessageDialog(this, "Artículo solicitado correctamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            limpiarCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, "No se pudo solicitar el artículo", 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
-        limpiarCampos();
-    }                                          
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "La cantidad debe ser un número válido", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    } 
+    
+    private int obtenerIdArticulo(String nombreArticulo) {
+    Connection conexion = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    
+    try {
+        conexion = ConexionDB.conectar();
+        String sql = "SELECT id FROM articulos WHERE nombre = ?";
+        ps = conexion.prepareStatement(sql);
+        ps.setString(1, nombreArticulo);
+        rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            return rs.getInt("id");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (conexion != null) conexion.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    return -1;
+}
 
     private void limpiarCampos(){
-        txtArticulo.setText("");
+        comboArticulos.setSelectedIndex(0);
         txtCantidad.setText("");
-        
-
-
-        
     }//GEN-LAST:event_btnPedirArtiActionPerformed
 
     private void btnInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventarioActionPerformed
@@ -218,14 +328,13 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     private javax.swing.JMenuItem btnInventario;
     private javax.swing.JButton btnPedirArti;
     private javax.swing.JMenuItem btnPerfil;
+    private javax.swing.JComboBox<String> comboArticulos;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu6;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JTextField txtArticulo;
     private javax.swing.JTextField txtCantidad;
     // End of variables declaration//GEN-END:variables
 }

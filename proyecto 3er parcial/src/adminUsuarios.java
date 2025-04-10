@@ -28,30 +28,35 @@ public class adminUsuarios extends javax.swing.JFrame {
 
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        jMenuItem1 = new javax.swing.JMenuItem();
-        jMenuItem2 = new javax.swing.JMenuItem();
-        jMenuItem3 = new javax.swing.JMenuItem();
+        btnNuevoUsu = new javax.swing.JMenuItem();
+        btnEliminarUsu = new javax.swing.JMenuItem();
+        btnModificarUsu = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jMenu1.setText("Opciones");
 
-        jMenuItem1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/agregar-usuario (1).png"))); // NOI18N
-        jMenuItem1.setText("Nuevo Usuario");
-        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+        btnNuevoUsu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/agregar-usuario (1).png"))); // NOI18N
+        btnNuevoUsu.setText("Nuevo Usuario");
+        btnNuevoUsu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem1ActionPerformed(evt);
+                btnNuevoUsuActionPerformed(evt);
             }
         });
-        jMenu1.add(jMenuItem1);
+        jMenu1.add(btnNuevoUsu);
 
-        jMenuItem2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/borrar-usuario.png"))); // NOI18N
-        jMenuItem2.setText("Eliminar Usuario");
-        jMenu1.add(jMenuItem2);
+        btnEliminarUsu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/borrar-usuario.png"))); // NOI18N
+        btnEliminarUsu.setText("Eliminar Usuario");
+        btnEliminarUsu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarUsuActionPerformed(evt);
+            }
+        });
+        jMenu1.add(btnEliminarUsu);
 
-        jMenuItem3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/lapiz-de-usuario.png"))); // NOI18N
-        jMenuItem3.setText("Modificar Usuario");
-        jMenu1.add(jMenuItem3);
+        btnModificarUsu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/iconos/lapiz-de-usuario.png"))); // NOI18N
+        btnModificarUsu.setText("Modificar Usuario");
+        jMenu1.add(btnModificarUsu);
 
         jMenuBar1.add(jMenu1);
 
@@ -71,9 +76,13 @@ public class adminUsuarios extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+    private void btnNuevoUsuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoUsuActionPerformed
         new FromNusuario().setVisible(true);
-    }//GEN-LAST:event_jMenuItem1ActionPerformed
+    }//GEN-LAST:event_btnNuevoUsuActionPerformed
+
+    private void btnEliminarUsuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarUsuActionPerformed
+        new FormAdminUsuarios().setVisible(true);
+    }//GEN-LAST:event_btnEliminarUsuActionPerformed
 
     /**
      * @param args the command line arguments
@@ -111,10 +120,10 @@ public class adminUsuarios extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem btnEliminarUsu;
+    private javax.swing.JMenuItem btnModificarUsu;
+    private javax.swing.JMenuItem btnNuevoUsu;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem2;
-    private javax.swing.JMenuItem jMenuItem3;
     // End of variables declaration//GEN-END:variables
 }

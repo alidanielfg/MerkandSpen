@@ -30,9 +30,9 @@ public class inventarioCRUD {
     
     public DefaultCategoryDataset obtenerTopSolicitudes() throws SQLException{
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        String sql = "SELECT a.nombre, COUNT(s.id) AS solicitudes "+
-                "FROM solicitudes s "+
-                "JOIN articulos a ON s.id_articulo = a.id "+
+        String sql = "SELECT a.nombre, COUNT(p.id) AS solicitudes "+
+                "FROM pedidos p "+
+                "JOIN articulos a ON p.id_articulo = a.id "+
                 "GROUP BY a.nombre "+
                 "ORDER BY solicitudes DESC "+
                 "LIMIT 5";
@@ -42,7 +42,7 @@ public class inventarioCRUD {
                 dataset.addValue(rs.getInt("solicitudes"),"Solicitudes",rs.getString("nombre"));
             }
         }catch (SQLException e){
-            System.out.println("Error al obtener solicitueds: "+ e.getMessage());
+            System.out.println("Error al obtener solicitudes: "+ e.getMessage());
         }
         return dataset;
     }

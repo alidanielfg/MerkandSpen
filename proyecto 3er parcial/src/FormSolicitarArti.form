@@ -9,11 +9,6 @@
         </Property>
       </Properties>
       <SubComponents>
-        <Menu class="javax.swing.JMenu" name="jMenu1">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Merk and Spen"/>
-          </Properties>
-        </Menu>
         <Menu class="javax.swing.JMenu" name="jMenu6">
           <Properties>
             <Property name="text" type="java.lang.String" value="Merk and Spen"/>
@@ -86,8 +81,8 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtCantidad" min="-2" pref="161" max="-2" attributes="0"/>
                           <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtArticulo" min="-2" pref="413" max="-2" attributes="0"/>
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                          <Component id="comboArticulos" alignment="0" min="-2" pref="388" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
@@ -95,7 +90,7 @@
                       <Component id="btnPedirArti" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="64" max="32767" attributes="0"/>
+              <EmptySpace pref="89" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -108,9 +103,9 @@
               <Component id="jSeparator1" min="-2" pref="17" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="txtArticulo" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="comboArticulos" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="txtCantidad" min="-2" max="-2" attributes="0"/>
@@ -140,8 +135,6 @@
         <Property name="text" type="java.lang.String" value="Articulo: "/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JTextField" name="txtArticulo">
-    </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -155,7 +148,7 @@
     <Component class="javax.swing.JButton" name="btnPedirArti">
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="26" green="26" red="26" type="rgb"/>
+          <Color blue="59" green="54" red="4c" type="rgb"/>
         </Property>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Yu Gothic UI Semibold" size="14" style="1"/>
@@ -168,6 +161,21 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnPedirArtiActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="comboArticulos">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Item 1"/>
+            <StringItem index="1" value="Item 2"/>
+            <StringItem index="2" value="Item 3"/>
+            <StringItem index="3" value="Item 4"/>
+          </StringArray>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>

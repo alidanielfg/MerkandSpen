@@ -1,63 +1,135 @@
-
-import java.awt.Color;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.sql.*;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 
-/**
- *
- * @author alida
- */
 public class FormAdminUsuarios extends javax.swing.JFrame {
     
     private int userId; // ID del usuario actual
     private Connection conexion;
+    private DefaultTableModel modeloTabla;
 
-    /**
-     * Creates new form FormAdminUsuarios
-     */
     public FormAdminUsuarios() {
         initComponents();
         setLocationRelativeTo(null);
+        inicializarTabla();
+        cargarUsuarios();
     }
     
-    private void eliminarCuenta() {
-        int confirmacion = JOptionPane.showConfirmDialog(
-            this, 
-            "¿Está seguro que desea eliminar su cuenta permanentemente?\nEsta acción no se puede deshacer.", 
-            "Confirmar eliminación de cuenta", 
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
-        );
+    private void inicializarTabla() {
+        modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Hacer que la tabla no sea editable
+            }
+        };
         
-        if (confirmacion == JOptionPane.YES_OPTION) {
-            if (!verificarConexion()) {
-                JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
+        // Configurar columnas
+        modeloTabla.addColumn("ID");
+        modeloTabla.addColumn("Departamento");
+        modeloTabla.addColumn("Rol");
+        
+        jTable1.setModel(modeloTabla);
+    }
+    
+    private void cargarUsuarios() {
+        if (!verificarConexion()) {
+            JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        try {
+            // Limpiar tabla antes de cargar nuevos datos
+            modeloTabla.setRowCount(0);
+            
+            // Consulta para obtener usuarios con sus departamentos y roles
+            String sql = "SELECT u.id, d.nombre AS departamento, r.nombre AS rol " +
+                         "FROM usuarios u " +
+                         "LEFT JOIN departamentos d ON u.id_departamento = d.id " +
+                         "LEFT JOIN roles r ON u.id_rol = r.id " +
+                         "ORDER BY u.id";
+            
+            try (PreparedStatement ps = conexion.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                
+                while (rs.next()) {
+                    Object[] fila = {
+                        rs.getInt("id"),
+                        rs.getString("departamento"),
+                        rs.getString("rol")
+                    };
+                    modeloTabla.addRow(fila);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    
+    private void eliminarUsuario() {
+        String idTexto = txtId.getText().trim();
+        
+        if (idTexto.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese el ID del usuario a eliminar", 
+                "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        try {
+            int idUsuario = Integer.parseInt(idTexto);
+            
+            // Verificar si el usuario existe
+            if (!usuarioExiste(idUsuario)) {
+                JOptionPane.showMessageDialog(this, "No existe un usuario con ID " + idUsuario, 
+                    "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            try {
+            // Confirmar eliminación
+            int confirmacion = JOptionPane.showConfirmDialog(
+                this, 
+                "¿Está seguro de eliminar al usuario con ID " + idUsuario + "?", 
+                "Confirmar eliminación", 
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (confirmacion == JOptionPane.YES_OPTION) {
                 String sql = "DELETE FROM usuarios WHERE id = ?";
                 try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-                    ps.setInt(1, userId);
+                    ps.setInt(1, idUsuario);
                     
                     int filasAfectadas = ps.executeUpdate();
                     if (filasAfectadas > 0) {
-                        JOptionPane.showMessageDialog(this, "Cuenta eliminada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                        this.dispose(); // Cerrar la ventana
+                        JOptionPane.showMessageDialog(this, "Usuario eliminado exitosamente", 
+                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                        cargarUsuarios();
+                        txtId.setText("");
                     } else {
-                        JOptionPane.showMessageDialog(this, "No se pudo eliminar la cuenta", "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "No se pudo eliminar el usuario", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Error al eliminar cuenta: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El ID debe ser un número válido", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar usuario: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    
+    private boolean usuarioExiste(int idUsuario) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE id = ?";
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
         }
     }
     
@@ -72,11 +144,6 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -84,8 +151,6 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
-        btnBuscar = new javax.swing.JButton();
-        btnMostrar = new javax.swing.JButton();
         btnEliminar = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtId = new javax.swing.JTextField();
@@ -108,20 +173,6 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(jTable1);
 
-        btnBuscar.setText("Buscar");
-        btnBuscar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBuscarActionPerformed(evt);
-            }
-        });
-
-        btnMostrar.setText("Mostrar usuarios");
-        btnMostrar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMostrarActionPerformed(evt);
-            }
-        });
-
         btnEliminar.setText("Eliminar usuario");
         btnEliminar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -137,58 +188,48 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap(75, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(256, 256, 256)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(61, 61, 61)
+                        .addGap(56, 56, 56)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnEliminar)
-                            .addComponent(btnMostrar)
                             .addComponent(jLabel2)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnBuscar))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(322, 322, 322)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(125, Short.MAX_VALUE))
+                            .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(47, 47, 47))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnEliminar)
+                        .addGap(22, 22, 22))))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(127, 127, 127)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(53, 53, 53)
+                .addGap(52, 52, 52)
                 .addComponent(jLabel1)
-                .addGap(39, 39, 39)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(39, 39, 39)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(109, 109, 109)
                         .addComponent(jLabel2)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btnBuscar))
-                        .addGap(28, 28, 28)
-                        .addComponent(btnEliminar)
-                        .addGap(30, 30, 30)
-                        .addComponent(btnMostrar))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(77, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnEliminar)))
+                .addContainerGap(78, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnBuscarActionPerformed
-
-    private void btnMostrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnMostrarActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btnMostrarActionPerformed
-
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        eliminarCuenta();
+        eliminarUsuario();
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     /**
@@ -227,9 +268,7 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnEliminar;
-    private javax.swing.JButton btnMostrar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
