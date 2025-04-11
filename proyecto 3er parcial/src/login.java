@@ -1,84 +1,53 @@
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.List;
-import javax.swing.JOptionPane;
 import java.sql.SQLException;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
-
-public class login extends javax.swing.JFrame {    
-     //constructor del jframe
+public class login extends javax.swing.JFrame {
+    private final DepartamentoDAO departamentoDAO;
+    private final Autenticador autenticador;
+    
     public login() {
+        this.departamentoDAO = new DepartamentoDAO();
+        this.autenticador = new Autenticador();
         initComponents();
         verificarConexion();
-        cargarDepartamentos(); // Llamada al nuevo método
+        cargarDepartamentos();
         setLocationRelativeTo(null);
-    }//fin jframe
-
+    }
+    
     private void cargarDepartamentos() {
-        try{
-            // Limpiar cualquier item existente
+        try {
             opcionesBox.removeAllItems();
+            List<String> departamentos = departamentoDAO.obtenerTodosDepartamentos();
 
-            //Sacar departamentos desde DB
-            List<String> departamentos = obtenerDepartamentosDesdeDB();
-
-            if(departamentos.isEmpty()){
-                JOptionPane.showMessageDialog(null,"No se encontro departamentos en la base de datos","Advertencia",JOptionPane.WARNING_MESSAGE);
+            if(departamentos.isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                    "No se encontraron departamentos en la base de datos",
+                    "Advertencia", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            for(String departamento : departamentos){
+
+            for(String departamento : departamentos) {
                 opcionesBox.addItem(departamento);
             }
 
-            if(departamentos.contains("Almacén")){
+            if(departamentos.contains("Almacén")) {
                 opcionesBox.setSelectedItem("Almacén");
             }
-        }catch (SQLException e){
-            JOptionPane.showMessageDialog(null,"Error al cargar departamentos: "+e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                "Error al cargar departamentos: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }//FIN CARGARDEPARTAMENTOS
-    
-    private List<String> obtenerDepartamentosDesdeDB() throws SQLException {
-        List<String> departamentos = new ArrayList<>();
-        Connection conexion = ConexionDB.conectar();
-        
-        if(conexion == null) {
-            throw new SQLException("No se pudo conectar a la base de datos");
-        }
-        
-        String sql = "SELECT nombre FROM departamentos ORDER BY nombre";
-        try (Statement stmt = conexion.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
-            while(rs.next()) {
-                departamentos.add(rs.getString("nombre"));
-            }
-        } finally {
-            if(conexion != null && !conexion.isClosed()) {
-                conexion.close();
-            }
-        }
-        
-        return departamentos;
     }
     
-    public void actualizarListaDepartamentos() {
-        cargarDepartamentos();
-    }
-    
-    private void verificarConexion(){ //Método para realizar la verificacion la conexion de la base de datos a el programa
-        
-        Connection conexion = ConexionDB.conectar();
-        
-        if(conexion != null){
-            JOptionPane.showMessageDialog(this,"Conectado","Conexion",JOptionPane.INFORMATION_MESSAGE);
-        }
-        else{
-           JOptionPane.showMessageDialog(this,"No se pudo Conectar","Conexion",JOptionPane.ERROR); 
+    private void verificarConexion() {
+        if(departamentoDAO != null) {
+            JOptionPane.showMessageDialog(this, "Conectado", "Conexión", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No se pudo conectar", "Conexión", JOptionPane.ERROR);
         }
     }
 
@@ -212,68 +181,72 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_opcionesBoxActionPerformed
 
     private void btnIngresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIngresarActionPerformed
-        String password = new String(txtPassword.getPassword()).trim();
-    String departamento = (String) opcionesBox.getSelectedItem();
-    
-    // Validación básica
-    if(password.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "La contraseña no puede estar vacía", 
-            "Validación", JOptionPane.WARNING_MESSAGE);
-        txtPassword.requestFocus();
-        return;
+    String password = new String(txtPassword.getPassword()).trim();
+        String departamento = (String) opcionesBox.getSelectedItem();
+        
+        if(validarCampos(password)) {
+            Autenticador.ResultadoAutenticacion resultado = autenticador.autenticar(departamento, password);
+            procesarResultadoAutenticacion(resultado);
+        }
     }
     
-    // Autenticación
-    Object[] resultado = Autenticador.autenticar(departamento, password);
-    
-    if(Boolean.TRUE.equals(resultado[0])) {
-        String rol = (String) resultado[1];
-        int userId = (int) resultado[2];
-        
-        // Mostrar interfaz según rol
-        abrirInterfazSegunRol(rol, userId, departamento);
-        this.dispose();
-        
-    } else if(Boolean.FALSE.equals(resultado[0])) {
-        JOptionPane.showMessageDialog(this, 
-            "Credenciales incorrectas", 
-            "Acceso denegado", JOptionPane.ERROR_MESSAGE);
-        txtPassword.setText("");
-        txtPassword.requestFocus();
-    }
-    // El caso "error" ya se maneja en la clase Autenticador
-}
-
-private void abrirInterfazSegunRol(String rol, int userId, String departamento) {
-    switch(rol.toLowerCase()) {
-        case "admin":
-        {
-            try {
-                new interfazAdmin().setVisible(true);
-            } catch (SQLException ex) {
-                Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-            break;
-
-        case "usuario":
-        {
-            try {
-                new interfazUsuario().setVisible(true);
-            } catch (SQLException ex) {
-                Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-            break;
-
-        default:
+    private boolean validarCampos(String password) {
+        if(password.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
-                "Rol no reconocido: " + rol, 
-                "Error", JOptionPane.ERROR_MESSAGE);
-    }
+                "La contraseña no puede estar vacía", 
+                "Validación", JOptionPane.WARNING_MESSAGE);
+            txtPassword.requestFocus();
+            return false;
+        }
+        return true;
     }//GEN-LAST:event_btnIngresarActionPerformed
 
+    private void procesarResultadoAutenticacion(Autenticador.ResultadoAutenticacion resultado) {
+        if(resultado.isError()) {
+            JOptionPane.showMessageDialog(this, 
+                "Error en la autenticación", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if(resultado.isAutenticado()) {
+            abrirInterfazSegunRol(resultado);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Credenciales incorrectas", 
+                "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+            txtPassword.setText("");
+            txtPassword.requestFocus();
+        }
+    }
+    
+    private void abrirInterfazSegunRol(Autenticador.ResultadoAutenticacion resultado) {
+        try {
+            switch(resultado.getRol().toLowerCase()) {
+                case "admin":
+                    new interfazAdmin().setVisible(true);
+                    break;
+                case "usuario":
+                    new interfazUsuario().setVisible(true);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(this, 
+                        "Rol no reconocido: " + resultado.getRol(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    @Override
+    public void dispose() {
+        departamentoDAO.cerrarConexion();
+        autenticador.cerrarConexion();
+        super.dispose();
+    }
+    
     /**
      * @param args the command line arguments
      */

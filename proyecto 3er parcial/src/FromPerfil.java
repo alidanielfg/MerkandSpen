@@ -3,164 +3,61 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
-import java.awt.Color;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.sql.*;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import java.sql.SQLException;
 
-/**
- *
- * @author marqu
- */
 public class FromPerfil extends javax.swing.JFrame {
-    private int userId; // ID del usuario actual
-    private Connection conexion;
+    private final UserCRUD userCRUD = null;
+    private final int userId = 0;
 
-    /**
-     * Creates new form FromPerfil
-     */
     public FromPerfil(int userId) {
-        initComponents();
-        this.userId = userId;
-        this.conexion = ConexionDB.conectar();
+        initComponents(); // Solo si es necesario
         cargarDatosUsuario();
         setLocationRelativeTo(null);
-        
-        bloquearCamposNoEditables();
-        
-        // Configurar el cierre de la ventana para cerrar la conexión
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                cerrarConexion();
-            }
-        });
-    }
-    
-    public FromPerfil() {
-        this(1); // Valor por defecto para pruebas
-    }
-    
-     private void cerrarConexion() {
-        try {
-            if (conexion != null && !conexion.isClosed()) {
-                conexion.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cerrar conexión: " + e.getMessage());
-        }
-    }
-    
-    private void cargarDatosUsuario() {
-        if (!verificarConexion()) {
-            JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+}
 
-        try {
-            // Consulta para obtener los datos del usuario, su rol y departamento
-            String sql = "SELECT u.contraseña, r.nombre as rol, d.nombre as departamento " +
-                         "FROM usuarios u " +
-                         "JOIN roles r ON u.id_rol = r.id " +
-                         "JOIN departamentos d ON u.id_departamento = d.id " +
-                         "WHERE u.id = ?";
-            
-            try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-                ps.setInt(1, userId);
-                ResultSet rs = ps.executeQuery();
-                
-                if (rs.next()) {
-                    txtRol.setText(rs.getString("rol"));
-                    txtDepartamento.setText(rs.getString("departamento"));
-                    // No mostramos la contraseña por seguridad
-                } else {
-                    JOptionPane.showMessageDialog(this, "Usuario no encontrado", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar datos del usuario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+    private FromPerfil() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-    
+
+    private void cargarDatosUsuario() {
+    try {
+        UserCRUD.Usuario usuario = userCRUD.obtenerUsuario(userId);
+        if (usuario != null) {
+            txtRol.setText(usuario.getRol());
+            txtDepartamento.setText(usuario.getDepartamento());
+        } else {
+            JOptionPane.showMessageDialog(this, "Usuario no encontrado", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Error al cargar datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
     private void cambiarContrasena() {
-        String nuevaContrasena = txtContrasena.getText().trim();
-        
-        if (nuevaContrasena.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor ingrese una nueva contraseña", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        if (nuevaContrasena.length() < 6) {
-            JOptionPane.showMessageDialog(this, "La contraseña debe tener al menos 6 caracteres", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        if (!verificarConexion()) {
-            JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
         try {
-            String sql = "UPDATE usuarios SET contraseña = ? WHERE id = ?";
-            try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-                ps.setString(1, nuevaContrasena);
-                ps.setInt(2, userId);
-                
-                int filasAfectadas = ps.executeUpdate();
-                if (filasAfectadas > 0) {
-                    JOptionPane.showMessageDialog(this, "Contraseña cambiada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                    txtContrasena.setText("");
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se pudo cambiar la contraseña", "Error", JOptionPane.ERROR_MESSAGE);
+            String nuevaContrasena = txtContrasena.getText();
+            if(validarContrasena(nuevaContrasena)) {
+                if(userCRUD.cambiarContrasena(userId, nuevaContrasena)) {
+                    JOptionPane.showMessageDialog(this, "Contraseña actualizada",
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cambiar contraseña: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    private boolean verificarConexion() {
-        try {
-            if (conexion == null || conexion.isClosed()) {
-                conexion = ConexionDB.conectar();
-            }
-            return conexion != null && !conexion.isClosed();
-        } catch (SQLException e) {
+
+    private boolean validarContrasena(String contrasena) {
+        if(contrasena.length() < 6) {
+            JOptionPane.showMessageDialog(this, "Mínimo 6 caracteres",
+                "Validación", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+        return true;
     }
-    
-    
-    private void bloquearCamposNoEditables() {    txtRol.setEditable(false);
-    txtDepartamento.setEditable(false);
 
-    txtRol.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-            e.consume();
-        }
-        @Override
-        public void keyTyped(KeyEvent e) {
-            e.consume();
-        }
-    });    
-    txtDepartamento.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-            e.consume();
-        }       
-        @Override
-        public void keyTyped(KeyEvent e) {
-            e.consume();
-        }
-    });
-    txtRol.setComponentPopupMenu(null);
-    txtDepartamento.setComponentPopupMenu(null);
-    txtRol.setBackground(new Color(150, 240, 250));
-    txtDepartamento.setBackground(new Color(150, 240, 250));
-    }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -367,10 +264,8 @@ public class FromPerfil extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FromPerfil().setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new FromPerfil().setVisible(true);
         });
     }
 

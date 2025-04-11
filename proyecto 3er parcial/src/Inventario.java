@@ -5,49 +5,36 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import javax.swing.*;
 import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jfree.chart.plot.PlotOrientation;
 import javax.swing.table.DefaultTableModel;
 import org.jfree.data.category.DefaultCategoryDataset;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Element;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import javax.swing.JTextField;
+
 
 public class Inventario extends javax.swing.JFrame {
-
     private inventarioCRUD crud;
     private Timer timerActualizacion;
     private ChartPanel chartPanel;
     
     public Inventario() {
         initComponents();
-        crud= new inventarioCRUD();
+        crud = new inventarioCRUD();
         initGrafica();
         iniciarActualizacionAutomatica();
         LlenarTabla();
         setLocationRelativeTo(null);
         
         opcionDescarga.setModel(new DefaultComboBoxModel<>(new String[] {
-        "Descargar reporte...",
-        "Inventario Completo",
-        "Pedidos por Departamento",
-        "Pedidos por Fechas"
-    }));
-        
-        opcionDescarga.addActionListener(this::opcionDescargaActionPerformed);
+            "Descargar reporte...",
+            "Inventario Completo",
+            "Pedidos por Departamento",
+            "Pedidos por Fechas"
+        }));
     }
-    
     
     private void LlenarTabla(){
         try{
@@ -71,13 +58,20 @@ public class Inventario extends javax.swing.JFrame {
     }
     
     private void initGrafica(){
-        JFreeChart chart = ChartFactory.createBarChart("5 Articulos mas solicitados","Articulos","Solicitudes",new DefaultCategoryDataset(),
-                PlotOrientation.HORIZONTAL,true,true,false);
+        JFreeChart chart = ChartFactory.createBarChart(
+            "5 Articulos mas solicitados",
+            "Articulos",
+            "Solicitudes",
+            new DefaultCategoryDataset(),
+            PlotOrientation.HORIZONTAL,
+            true,
+            true,
+            false
+        );
         
-        chartPanel= new ChartPanel(chart);
+        chartPanel = new ChartPanel(chart);
         chartPanel.setMouseWheelEnabled(true);
-        chartPanel.setPreferredSize(new Dimension(400,200));
-        
+        chartPanel.setPreferredSize(new Dimension(650,200));
         
         jPanel1.setLayout(new BorderLayout());
         jPanel1.add(chartPanel,BorderLayout.NORTH);
@@ -93,7 +87,7 @@ public class Inventario extends javax.swing.JFrame {
     }
     
     private void iniciarActualizacionAutomatica(){
-        timerActualizacion = new Timer(5000,e -> {
+        timerActualizacion = new Timer(5000, e -> {
             try {
                 actualizarGrafica();
             } catch (SQLException ex) {
@@ -107,181 +101,6 @@ public class Inventario extends javax.swing.JFrame {
         if(timerActualizacion != null) timerActualizacion.stop();
         super.dispose();
     }
-    
-private void generarReporteInventarioCompleto() {
-    try {
-        Document document = new Document();
-        String fileName = "reporte_inventario_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".pdf";
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        
-        document.open();
-
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Paragraph title = new Paragraph("Reporte de Inventario Completo", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        document.add(title);
-        
-        document.add(new Paragraph(" "));
-
-        PdfPTable table = new PdfPTable(5);
-        table.setWidthPercentage(100);
-
-        String[] headers = {"ID", "Nombre", "Descripción", "Cantidad", "Stock"};
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Phrase(header));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-        }
-        
-            //Obtener los datos para la tabla
-        ResultSet resultados = crud.obtenerInventarioCompleto();
-        
-        //Llenamos los datos a la tabla
-        while (resultados != null && resultados.next()) {
-            table.addCell(String.valueOf(resultados.getInt("id")));
-            table.addCell(resultados.getString("nombre"));
-            table.addCell(resultados.getString("descripcion"));
-            table.addCell(String.valueOf(resultados.getInt("cantidad")));
-            table.addCell(String.valueOf(resultados.getInt("stock")));
-        }
-        
-        document.add(table);
-        document.close();
-        
-        JOptionPane.showMessageDialog(this, 
-            "Reporte generado exitosamente: " + new File(fileName).getAbsolutePath(),
-            "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al generar reporte: " + e.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-    }
-}
-
-private void generarReportePedidosPorDepartamento() {
-    try {
-        Document document = new Document();
-        String fileName = "reporte_pedidos_departamento_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".pdf";
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        
-        document.open();
-        
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Paragraph title = new Paragraph("Reporte de Pedidos por Departamento", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        document.add(title);
-        
-        document.add(new Paragraph(" "));
-        
-        PdfPTable table = new PdfPTable(2);
-        table.setWidthPercentage(100);
-        
-        String[] headers = {"Departamento", "Cantidad de Pedidos"};
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Phrase(header));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-        }
-        
-        ResultSet resultados = crud.obtenerPedidosPorDepartamento();
-        
-        while (resultados != null && resultados.next()) {
-            table.addCell(resultados.getString("departamento"));
-            table.addCell(String.valueOf(resultados.getInt("cantidad_pedidos")));
-        }
-        
-        document.add(table);
-        document.close();
-        
-        JOptionPane.showMessageDialog(this, 
-            "Reporte generado exitosamente: " + new File(fileName).getAbsolutePath(),
-            "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al generar reporte: " + e.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-    }
-}
-
-private void generarReportePedidosPorFechas() {
-    JTextField fechaInicioField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-    JTextField fechaFinField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-    
-    Object[] message = {
-        "Fecha Inicio (yyyy-MM-dd):", fechaInicioField,
-        "Fecha Fin (yyyy-MM-dd):", fechaFinField
-    };
-    
-    int option = JOptionPane.showConfirmDialog(this, message, "Seleccione el rango de fechas", 
-        JOptionPane.OK_CANCEL_OPTION);
-    
-    if (option != JOptionPane.OK_OPTION) {
-        return;
-    }
-    
-    try {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date fechaInicio = sdf.parse(fechaInicioField.getText());
-        Date fechaFin = sdf.parse(fechaFinField.getText());
-        
-        Document document = new Document();
-        String fileName = "reporte_pedidos_fechas_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".pdf";
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        
-        document.open();
-        
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Paragraph title = new Paragraph("Reporte de Pedidos por Fechas", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        document.add(title);
-
-        Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
-        Paragraph subTitle = new Paragraph(
-            "Del " + sdf.format(fechaInicio) + " al " + sdf.format(fechaFin), subTitleFont);
-        subTitle.setAlignment(Element.ALIGN_CENTER);
-        document.add(subTitle);
-        
-        document.add(new Paragraph(" "));
-        
-        PdfPTable table = new PdfPTable(6);
-        table.setWidthPercentage(100);
-        
-        String[] headers = {"ID", "Artículo", "Departamento", "Fecha Solicitud", "Cantidad", "Estado"};
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Phrase(header));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-        }
-        
-        ResultSet resultados = crud.obtenerPedidosPorFechas(fechaInicio, fechaFin);
-        
-        while (resultados != null && resultados.next()) {
-            table.addCell(String.valueOf(resultados.getInt("id")));
-            table.addCell(resultados.getString("articulo"));
-            table.addCell(resultados.getString("departamento"));
-            table.addCell(new SimpleDateFormat("yyyy-MM-dd").format(resultados.getDate("fecha_solicitud")));
-            table.addCell(String.valueOf(resultados.getInt("cantidad")));
-            table.addCell(resultados.getString("estado"));
-        }
-        
-        document.add(table);
-        document.close();
-        
-        JOptionPane.showMessageDialog(this, 
-            "Reporte generado exitosamente: " + new File(fileName).getAbsolutePath(),
-            "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al generar reporte: " + e.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace();
-    }
-}
     
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -441,76 +260,86 @@ private void generarReportePedidosPorFechas() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnBuscarNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarNombreActionPerformed
-    // 1. Obtener el texto de búsqueda
     String nombreBusqueda = txtArticulo.getText().trim();
-    
-    // 2. Validar que no esté vacío
-    if(nombreBusqueda.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Debe ingresar un nombre para buscar", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    
-    // 3. Realizar la búsqueda en la base de datos
-    try {
-        ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
-        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
-        modelo.setRowCount(0); // Limpiar la tabla antes de agregar nuevos resultados
         
-        // 4. Llenar la tabla con los resultados
-        boolean encontrado = false;
-        while(resultados != null && resultados.next()) {
-            encontrado = true;
-            modelo.addRow(new Object[]{
-                resultados.getInt("id"),
-                resultados.getString("nombre"),
-                resultados.getString("descripcion"),
-                resultados.getInt("cantidad"),
-                resultados.getInt("stock")
-            });
-        }
-        
-        // 5. Mostrar mensaje si no hay resultados
-        if(!encontrado) {
+        if(nombreBusqueda.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
-                "No se encontraron artículos con ese nombre", 
-                "Información", 
-                JOptionPane.INFORMATION_MESSAGE);
+                "Debe ingresar un nombre para buscar", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
         }
-    } 
-    catch(SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al buscar en la base de datos: " + ex.getMessage(), 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    }
+        
+        try {
+            ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+            modelo.setRowCount(0);
+            
+            boolean encontrado = false;
+            while(resultados != null && resultados.next()) {
+                encontrado = true;
+                modelo.addRow(new Object[]{
+                    resultados.getInt("id"),
+                    resultados.getString("nombre"),
+                    resultados.getString("descripcion"),
+                    resultados.getInt("cantidad"),
+                    resultados.getInt("stock")
+                });
+            }
+            
+            if(!encontrado) {
+                JOptionPane.showMessageDialog(this, 
+                    "No se encontraron artículos con ese nombre", 
+                    "Información", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } 
+        catch(SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al buscar en la base de datos: " + ex.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+        
+        limpiar();
     
-    limpiar();
     }//GEN-LAST:event_btnBuscarNombreActionPerformed
 
     private void opcionDescargaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_opcionDescargaActionPerformed
         String seleccion = (String) opcionDescarga.getSelectedItem();
+        
+        if (seleccion == null || seleccion.equals("Descargar reporte...")) {
+            return;
+        }
+        
+        switch (seleccion) {
+            case "Inventario Completo":
+                crud.generarReporteInventarioCompleto();
+                break;
+            case "Pedidos por Departamento":
+                crud.generarReportePedidosPorDepartamento();
+                break;
+            case "Pedidos por Fechas":
+                JTextField fechaInicioField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+                JTextField fechaFinField = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+                
+                Object[] message = {
+                    "Fecha Inicio (yyyy-MM-dd):", fechaInicioField,
+                    "Fecha Fin (yyyy-MM-dd):", fechaFinField
+                };
+                
+                int option = JOptionPane.showConfirmDialog(this, message, "Seleccione el rango de fechas", 
+                    JOptionPane.OK_CANCEL_OPTION);
+                
+                if (option == JOptionPane.OK_OPTION) {
+                    crud.generarReportePedidosPorFechas(fechaInicioField, fechaFinField);
+                }
+                break;
+        }
+        
+        opcionDescarga.setSelectedIndex(0);
     
-    if (seleccion == null || seleccion.equals("Seleccione un reporte...")) {
-        return;
-    }
-    
-    switch (seleccion) {
-        case "Inventario Completo":
-            generarReporteInventarioCompleto();
-            break;
-        case "Pedidos por Departamento":
-            generarReportePedidosPorDepartamento();
-            break;
-        case "Pedidos por Fechas":
-            generarReportePedidosPorFechas();
-            break;
-    }
-
-    opcionDescarga.setSelectedIndex(0);
     }//GEN-LAST:event_opcionDescargaActionPerformed
 
     private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
@@ -533,87 +362,64 @@ private void generarReportePedidosPorFechas() {
     }//GEN-LAST:event_btnVolverActionPerformed
 
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        // 1. Obtener la fila seleccionada
-    int filaSeleccionada = jTable1.getSelectedRow();
-    
-    // 2. Validar que haya una fila seleccionada
-    if(filaSeleccionada == -1) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor seleccione un artículo para eliminar", 
-            "Advertencia", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-    
-    // 3. Obtener el ID del artículo seleccionado
-    int idArticulo = (int) jTable1.getValueAt(filaSeleccionada, 0);
-    String nombreArticulo = (String) jTable1.getValueAt(filaSeleccionada, 1);
-    
-    // 4. Confirmar con el usuario
-    int confirmacion = JOptionPane.showConfirmDialog(this, 
-        "¿Está seguro que desea eliminar el artículo: " + nombreArticulo + "?", 
-        "Confirmar Eliminación", 
-        JOptionPane.YES_NO_OPTION);
-    
-    if(confirmacion != JOptionPane.YES_OPTION) {
-        return;
-    }
-    
-    // 5. Intentar eliminar
-    if(crud.eliminarArticulo(idArticulo)) {
-        JOptionPane.showMessageDialog(this, 
-            "Artículo eliminado correctamente", 
-            "Éxito", 
-            JOptionPane.INFORMATION_MESSAGE);
+        int filaSeleccionada = jTable1.getSelectedRow();
         
-        // Actualizar la tabla
-        LlenarTabla();
-    } else {
-        JOptionPane.showMessageDialog(this, 
-            "Error al eliminar el artículo", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-    }
+        if(filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(null, 
+                "Por favor seleccione un artículo para eliminar", 
+                "Advertencia", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int idArticulo = (int) jTable1.getValueAt(filaSeleccionada, 0);
+        String nombreArticulo = (String) jTable1.getValueAt(filaSeleccionada, 1);
+        
+        int confirmacion = JOptionPane.showConfirmDialog(null, 
+            "¿Está seguro que desea eliminar el artículo: " + nombreArticulo + "?", 
+            "Confirmar Eliminación", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if(confirmacion != JOptionPane.YES_OPTION) {
+            return;
+        }
+        
+        if(crud.eliminarArticulo(idArticulo)) {
+            JOptionPane.showMessageDialog(null, 
+                "Artículo eliminado correctamente", 
+                "Éxito", 
+                JOptionPane.INFORMATION_MESSAGE);
+            LlenarTabla();
+        } else {
+            JOptionPane.showMessageDialog(null, 
+                "Error al eliminar el artículo", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
-    private void limpiar(){
-        txtArticulo.setText("");
-    }
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+    private void limpiar() {
+    txtArticulo.setText("");
+}
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new Inventario().setVisible(true);
+public static void main(String args[]) {
+    try {
+        for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+            if ("Nimbus".equals(info.getName())) {
+                javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                break;
             }
-        });
+        }
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+        java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
     }
+    java.awt.EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            new Inventario().setVisible(true);
+        }
+    });
+}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu Opciones;

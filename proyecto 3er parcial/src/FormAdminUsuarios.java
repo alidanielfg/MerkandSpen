@@ -1,141 +1,84 @@
-import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.sql.SQLException;
+import java.util.List;
 
 public class FormAdminUsuarios extends javax.swing.JFrame {
-    
-    private int userId;
-    private Connection conexion;
-    private DefaultTableModel modeloTabla;
+    private UserCRUD userCRUD = null;
+    private DefaultTableModel modeloTabla = null;
 
     public FormAdminUsuarios() {
-        initComponents();
-        setLocationRelativeTo(null);
-        inicializarTabla();
+        try {
+            userCRUD = new UserCRUD();
+            modeloTabla = new DefaultTableModel(new String[]{"ID", "Departamento", "Rol"}, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) { return false; }
+            };
+            initComponents();
+            configurarInterfaz();
+        } catch (SQLException e) {
+            mostrarErrorConexion();
+        }
+    }
+
+    private void configurarInterfaz() {
+        jTable1.setModel(modeloTabla);
         cargarUsuarios();
     }
-    
-    private void inicializarTabla() {
-        modeloTabla = new DefaultTableModel() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        //Configurar columnas
-        modeloTabla.addColumn("ID");
-        modeloTabla.addColumn("Departamento");
-        modeloTabla.addColumn("Rol");
-        
-        jTable1.setModel(modeloTabla);
-    }
-    
+
     private void cargarUsuarios() {
-        if (!verificarConexion()) {
-            JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
         try {
             modeloTabla.setRowCount(0);
-
-            String sql = "SELECT u.id, d.nombre AS departamento, r.nombre AS rol " +
-                         "FROM usuarios u " +
-                         "LEFT JOIN departamentos d ON u.id_departamento = d.id " +
-                         "LEFT JOIN roles r ON u.id_rol = r.id " +
-                         "ORDER BY u.id";
+            List<UserCRUD.Usuario> usuarios = userCRUD.obtenerUsuarios();
             
-            try (PreparedStatement ps = conexion.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-                
-                while (rs.next()) {
-                    Object[] fila = {
-                        rs.getInt("id"),
-                        rs.getString("departamento"),
-                        rs.getString("rol")
-                    };
-                    modeloTabla.addRow(fila);
-                }
+            for(UserCRUD.Usuario usuario : usuarios) {
+                modeloTabla.addRow(new Object[]{
+                    usuario.getId(),
+                    usuario.getDepartamento(),
+                    usuario.getRol()
+                });
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage(), 
+            JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
         }
     }
-    
+
     private void eliminarUsuario() {
-        String idTexto = txtId.getText().trim();
-        
-        if (idTexto.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Ingrese el ID del usuario a eliminar", 
-                "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
         try {
-            int idUsuario = Integer.parseInt(idTexto);
+            int idUsuario = Integer.parseInt(txtId.getText().trim());
             
-            //verifica si existe usuario
-            if (!usuarioExiste(idUsuario)) {
-                JOptionPane.showMessageDialog(this, "No existe un usuario con ID " + idUsuario, 
+            if(!userCRUD.usuarioExiste(idUsuario)) {
+                JOptionPane.showMessageDialog(this, "Usuario no encontrado", 
                     "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            int confirmacion = JOptionPane.showConfirmDialog(
-                this, 
-                "¿Está seguro de eliminar al usuario con ID " + idUsuario + "?", 
-                "Confirmar eliminación", 
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-            
-            if (confirmacion == JOptionPane.YES_OPTION) {
-                String sql = "DELETE FROM usuarios WHERE id = ?";
-                try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-                    ps.setInt(1, idUsuario);
-                    
-                    int filasAfectadas = ps.executeUpdate();
-                    if (filasAfectadas > 0) {
-                        JOptionPane.showMessageDialog(this, "Usuario eliminado exitosamente", 
-                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                        cargarUsuarios();
-                        txtId.setText("");
-                    } else {
-                        JOptionPane.showMessageDialog(this, "No se pudo eliminar el usuario", 
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+            int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar usuario ID " + idUsuario + "?", 
+                "Confirmar", JOptionPane.YES_NO_OPTION);
+
+            if(confirmacion == JOptionPane.YES_OPTION && userCRUD.eliminarUsuario(idUsuario)) {
+                JOptionPane.showMessageDialog(this, "Usuario eliminado", 
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarUsuarios();
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "El ID debe ser un número válido", 
+        } catch (NumberFormatException | SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al eliminar usuario: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
         }
     }
-    
-    private boolean usuarioExiste(int idUsuario) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM usuarios WHERE id = ?";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, idUsuario);
-            ResultSet rs = ps.executeQuery();
-            return rs.next() && rs.getInt(1) > 0;
-        }
+
+    private void mostrarErrorConexion() {
+        JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos",
+            "Error crítico", JOptionPane.ERROR_MESSAGE);
+        System.exit(1);
     }
-    
-    private boolean verificarConexion() {
-        try {
-            if (conexion == null || conexion.isClosed()) {
-                conexion = ConexionDB.conectar();
-            }
-            return conexion != null && !conexion.isClosed();
-        } catch (SQLException e) {
-            return false;
-        }
+
+    @Override
+    public void dispose() {
+        userCRUD.cerrarConexion();
+        super.dispose();
     }
 
     @SuppressWarnings("unchecked")

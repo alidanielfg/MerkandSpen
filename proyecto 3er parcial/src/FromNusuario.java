@@ -1,95 +1,63 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
-
 import javax.swing.*;
+import java.sql.SQLException;
 import java.util.List;
 
-/**
- *
- * @author marqu
- */
 public class FromNusuario extends javax.swing.JFrame {
+    private UserCRUD userCRUD = null;
     
-    private UserCRUD userCRUD;
-    
-    /**
-     * Creates new form FromNusuario
-     */
-    public FromNusuario() {
-        initComponents();
-        inicializarConexion();
-        setLocationRelativeTo(null);
-    }
 
-     private void inicializarConexion() {
+    public FromNusuario() {
         try {
             userCRUD = new UserCRUD();
-            cargarRoles();
-            configurarBoton();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error al conectar con la base de datos:\n" + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
+            initComponents();
+            configurarInterfaz();
+        } catch (SQLException e) {
+            mostrarErrorConexion();
         }
     }
-     
-   private void cargarRoles() {
+
+    private void configurarInterfaz() {
+        cargarRoles();
+        btnRegistrar.addActionListener(e -> registrarUsuario());
+    }
+
+    private void cargarRoles() {
         try {
             boxRol.removeAllItems();
             List<String> roles = userCRUD.obtenerRoles();
-            
-            if(roles.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "No se encontraron roles en la base de datos", 
-                    "Advertencia", JOptionPane.WARNING_MESSAGE);
-            }
-            
-            for (String rol : roles) {
-                boxRol.addItem(rol);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error al cargar roles: " + e.getMessage(), 
+            roles.forEach(boxRol::addItem);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar roles: " + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-   
-    private void configurarBoton() {
-        btnRegistrar.addActionListener(e -> registrarUsuario());
-    }
-    
-     private void registrarUsuario() {
-        String departamento = txtDepartamento.getText().trim();
-        String contrasena = new String(txtContrasena.getText()).trim();
-        String rol = boxRol.getSelectedItem().toString();
 
-        if(departamento.isEmpty() || contrasena.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Todos los campos son obligatorios", 
-                "Validación", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
+    private void registrarUsuario() {
         try {
-            boolean exito = userCRUD.crearUsuario(departamento, contrasena, rol);
-            if(exito) {
-                JOptionPane.showMessageDialog(this, 
-                    "Usuario registrado exitosamente", 
-                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                limpiarCampos();
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "No se pudo registrar el usuario", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            String departamento = txtDepartamento.getText().trim();
+            String contrasena = new String(txtContrasena.getText());
+            String rol = boxRol.getSelectedItem().toString();
+
+            if(validarCampos(departamento, contrasena)) {
+                if(userCRUD.crearUsuario(departamento, contrasena, rol)) {
+                    JOptionPane.showMessageDialog(this, "Usuario creado", 
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    limpiarCampos();
+                }
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error al registrar: " + e.getMessage(), 
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private boolean validarCampos(String departamento, String contrasena) {
+        if(departamento.isEmpty() || contrasena.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Complete todos los campos",
+                "Validación", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
     }
 
     private void limpiarCampos() {
@@ -268,4 +236,8 @@ public class FromNusuario extends javax.swing.JFrame {
     private javax.swing.JTextField txtContrasena;
     private javax.swing.JTextField txtDepartamento;
     // End of variables declaration//GEN-END:variables
+
+    private void mostrarErrorConexion() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

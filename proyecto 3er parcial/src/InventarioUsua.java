@@ -6,15 +6,14 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class InventarioUsua extends javax.swing.JFrame {
-private inventarioCRUD crud;
+    private inventarioCRUD crud;
 
     public InventarioUsua() {
-        crud= new inventarioCRUD();
+        crud = new inventarioCRUD();
         initComponents();
         LlenarTabla();
         setLocationRelativeTo(null);
     }
-
     
     private void LlenarTabla(){
         try{
@@ -36,6 +35,7 @@ private inventarioCRUD crud;
             ex.printStackTrace();
         }
     }
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -160,62 +160,57 @@ private inventarioCRUD crud;
     }//GEN-LAST:event_btnSolicitarActionPerformed
 
     private void btnBuscarNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarNombreActionPerformed
-        // 1. Obtener el texto de búsqueda
-    String nombreBusqueda = txtArticulo.getText().trim();
-    
-    // 2. Validar que no esté vacío
-    if(nombreBusqueda.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Debe ingresar un nombre para buscar", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    
-    // 3. Realizar la búsqueda en la base de datos
-    try {
-        ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
-        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
-        modelo.setRowCount(0); // Limpiar la tabla antes de agregar nuevos resultados
+       String nombreBusqueda = txtArticulo.getText().trim();
         
-        // 4. Llenar la tabla con los resultados
-        boolean encontrado = false;
-        while(resultados != null && resultados.next()) {
-            encontrado = true;
-            modelo.addRow(new Object[]{
-                resultados.getInt("id"),
-                resultados.getString("nombre"),
-                resultados.getString("descripcion"),
-                resultados.getInt("cantidad"),
-                resultados.getInt("stock")
-            });
-        }
-        
-        // 5. Mostrar mensaje si no hay resultados
-        if(!encontrado) {
+        if(nombreBusqueda.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
-                "No se encontraron artículos con ese nombre", 
-                "Información", 
-                JOptionPane.INFORMATION_MESSAGE);
+                "Debe ingresar un nombre para buscar", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
         }
-    } 
-    catch(SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al buscar en la base de datos: " + ex.getMessage(), 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    }
-    
-    limpiar();
+        
+        try {
+            ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+            modelo.setRowCount(0);
+            
+            boolean encontrado = false;
+            while(resultados != null && resultados.next()) {
+                encontrado = true;
+                modelo.addRow(new Object[]{
+                    resultados.getInt("id"),
+                    resultados.getString("nombre"),
+                    resultados.getString("descripcion"),
+                    resultados.getInt("cantidad"),
+                    resultados.getInt("stock")
+                });
+            }
+            
+            if(!encontrado) {
+                JOptionPane.showMessageDialog(this, 
+                    "No se encontraron artículos con ese nombre", 
+                    "Información", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } 
+        catch(SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al buscar en la base de datos: " + ex.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+        
+        limpiar();
     }//GEN-LAST:event_btnBuscarNombreActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
     try {
-        new interfazUsuario().setVisible(true);
-    } catch (SQLException ex) {
-        Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
-    }
+            new interfazUsuario().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
     private void limpiar(){
