@@ -1,70 +1,69 @@
 import javax.swing.*;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class FromNusuario extends javax.swing.JFrame {
-    private UserCRUD userCRUD = null;
-    
+    private CRUD crud;
 
-    public FromNusuario() {
-        try {
-            userCRUD = new UserCRUD();
-            initComponents();
-            configurarInterfaz();
-        } catch (SQLException e) {
-            mostrarErrorConexion();
-        }
-    }
-
-    private void configurarInterfaz() {
+    public FromNusuario() throws SQLException {
+        initComponents();
+        crud = new CRUD();
+        setLocationRelativeTo(null);
         cargarRoles();
-        btnRegistrar.addActionListener(e -> registrarUsuario());
     }
 
     private void cargarRoles() {
         try {
             boxRol.removeAllItems();
-            List<String> roles = userCRUD.obtenerRoles();
-            roles.forEach(boxRol::addItem);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar roles: " + e.getMessage(),
+            List<String> roles = crud.obtenerRolesDisponibles();
+            for (String rol : roles) {
+                boxRol.addItem(rol);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al cargar roles: " + ex.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void registrarUsuario() {
+        String departamento = txtDepartamento.getText().trim();
+        String contrasena = new String(txtContrasena.getText());
+        String rol = boxRol.getSelectedItem().toString();
+        
+        if (departamento.isEmpty() || contrasena.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Complete todos los campos",
+                "Validación", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
         try {
-            String departamento = txtDepartamento.getText().trim();
-            String contrasena = new String(txtContrasena.getText());
-            String rol = boxRol.getSelectedItem().toString();
-
-            if(validarCampos(departamento, contrasena)) {
-                if(userCRUD.crearUsuario(departamento, contrasena, rol)) {
-                    JOptionPane.showMessageDialog(this, "Usuario creado", 
-                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                    limpiarCampos();
-                }
+            if (crud.crearUsuario(departamento, contrasena, rol)) {
+                JOptionPane.showMessageDialog(this, 
+                    "Usuario creado exitosamente",
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                limpiarCampos();
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "No se pudo crear el usuario",
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al crear usuario: " + ex.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private boolean validarCampos(String departamento, String contrasena) {
-        if(departamento.isEmpty() || contrasena.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Complete todos los campos",
-                "Validación", JOptionPane.WARNING_MESSAGE);
-            return false;
-        }
-        return true;
-    }
-
     private void limpiarCampos() {
-        txtDepartamento.setText("");
-        txtContrasena.setText("");
-        boxRol.setSelectedIndex(0);
-    }
+    txtDepartamento.setText("");
+    txtContrasena.setText("");
+    boxRol.setSelectedIndex(0);
+    txtDepartamento.requestFocus();
+}
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -88,7 +87,7 @@ public class FromNusuario extends javax.swing.JFrame {
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 14)); // NOI18N
         jLabel1.setText("Ingrese su departamento");
@@ -109,6 +108,11 @@ public class FromNusuario extends javax.swing.JFrame {
         btnRegistrar.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 12)); // NOI18N
         btnRegistrar.setForeground(new java.awt.Color(255, 255, 255));
         btnRegistrar.setText("Registrar usuario");
+        btnRegistrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRegistrarActionPerformed(evt);
+            }
+        });
 
         boxRol.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -183,9 +187,65 @@ public class FromNusuario extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        new adminUsuarios().setVisible(true);
+        try {
+            new FormAdminUsuarios(0).setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FromNusuario.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
+
+    private void btnRegistrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarActionPerformed
+        // Obtener los datos del formulario
+    String departamento = txtDepartamento.getText().trim();
+    String contrasena = new String(txtContrasena.getText()).trim(); // Cambiado a getPassword()
+    String rol = (String) boxRol.getSelectedItem();
+    
+    // Validar campos obligatorios
+    if (departamento.isEmpty() || contrasena.isEmpty()) {
+        JOptionPane.showMessageDialog(this, 
+            "Todos los campos son obligatorios", 
+            "Validación", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    // Validar longitud mínima de contraseña
+    if (contrasena.length() < 6) {
+        JOptionPane.showMessageDialog(this, 
+            "La contraseña debe tener al menos 6 caracteres", 
+            "Validación", JOptionPane.WARNING_MESSAGE);
+        txtContrasena.requestFocus();
+        return;
+    }
+    
+    // Confirmar el registro
+    int confirmacion = JOptionPane.showConfirmDialog(this, 
+        "¿Está seguro de registrar este usuario?", 
+        "Confirmar registro", JOptionPane.YES_NO_OPTION);
+    
+    if (confirmacion != JOptionPane.YES_OPTION) {
+        return;
+    }
+    
+    try {
+        // Intentar registrar el usuario
+        if (crud.crearUsuario(departamento, contrasena, rol)) {
+            JOptionPane.showMessageDialog(this, 
+                "Usuario registrado exitosamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            limpiarCampos();
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "No se pudo registrar el usuario", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        Logger.getLogger(FromNusuario.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(this, 
+            "Error al registrar usuario: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_btnRegistrarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -217,7 +277,11 @@ public class FromNusuario extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new FromNusuario().setVisible(true);
+                try {
+                    new FromNusuario().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(FromNusuario.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }

@@ -1,4 +1,3 @@
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -6,32 +5,32 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class InventarioUsua extends javax.swing.JFrame {
-    private inventarioCRUD crud;
+    private CRUD crud;
 
-    public InventarioUsua() {
-        crud = new inventarioCRUD();
+    public InventarioUsua() throws SQLException {
+        crud = new CRUD();
         initComponents();
-        LlenarTabla();
+        llenarTabla();
         setLocationRelativeTo(null);
     }
     
-    private void LlenarTabla(){
-        try{
-            ResultSet resultados = crud.obtenerArticulos();
-            DefaultTableModel modelo= (DefaultTableModel) jTable1.getModel();
+    private void llenarTabla() {
+        try {
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
             modelo.setRowCount(0);
             
-            while(resultados != null && resultados.next()){
+            for (CRUD.Articulo articulo : crud.obtenerArticulos()) {
                 modelo.addRow(new Object[]{
-                    resultados.getInt("id"),
-                    resultados.getString("nombre"),
-                    resultados.getString("descripcion"),
-                    resultados.getInt("cantidad"),
-                    resultados.getInt("stock")
+                    articulo.getId(),
+                    articulo.getNombre(),
+                    articulo.getDescripcion(),
+                    articulo.getCantidad(),
+                    articulo.getStock()
                 });               
             }
-        }catch(SQLException ex){
-            JOptionPane.showMessageDialog(null,"Error al cargar inventario"+ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+        } catch(SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error al cargar inventario: " + ex.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
     }
@@ -53,7 +52,7 @@ public class InventarioUsua extends javax.swing.JFrame {
 
         jPasswordField1.setText("jPasswordField1");
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -155,13 +154,17 @@ public class InventarioUsua extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSolicitarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitarActionPerformed
-        new FormSolicitarArti().setVisible(true);
+        try {
+            new FormSolicitarArti(0).setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnSolicitarActionPerformed
 
     private void btnBuscarNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarNombreActionPerformed
        String nombreBusqueda = txtArticulo.getText().trim();
-        
+            
         if(nombreBusqueda.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
                 "Debe ingresar un nombre para buscar", 
@@ -171,19 +174,18 @@ public class InventarioUsua extends javax.swing.JFrame {
         }
         
         try {
-            ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
             DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
             modelo.setRowCount(0);
             
             boolean encontrado = false;
-            while(resultados != null && resultados.next()) {
+            for (CRUD.Articulo articulo : crud.buscarArticulosPorNombre(nombreBusqueda)) {
                 encontrado = true;
                 modelo.addRow(new Object[]{
-                    resultados.getInt("id"),
-                    resultados.getString("nombre"),
-                    resultados.getString("descripcion"),
-                    resultados.getInt("cantidad"),
-                    resultados.getInt("stock")
+                    articulo.getId(),
+                    articulo.getNombre(),
+                    articulo.getDescripcion(),
+                    articulo.getCantidad(),
+                    articulo.getStock()
                 });
             }
             
@@ -193,8 +195,7 @@ public class InventarioUsua extends javax.swing.JFrame {
                     "Información", 
                     JOptionPane.INFORMATION_MESSAGE);
             }
-        } 
-        catch(SQLException ex) {
+        } catch(SQLException ex) {
             JOptionPane.showMessageDialog(this, 
                 "Error al buscar en la base de datos: " + ex.getMessage(), 
                 "Error", 
@@ -206,7 +207,7 @@ public class InventarioUsua extends javax.swing.JFrame {
     }//GEN-LAST:event_btnBuscarNombreActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-    try {
+        try {
             new interfazUsuario().setVisible(true);
         } catch (SQLException ex) {
             Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
@@ -246,7 +247,11 @@ public class InventarioUsua extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new InventarioUsua().setVisible(true);
+                try {
+                    new InventarioUsua().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }

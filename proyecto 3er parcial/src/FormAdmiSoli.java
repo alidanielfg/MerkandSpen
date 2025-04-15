@@ -1,56 +1,61 @@
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
-import java.sql.ResultSet;
-import javax.swing.JOptionPane;
-import java.sql.PreparedStatement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
- /*
- * @author lozan
- */
 public class FormAdmiSoli extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JTextField jTextField1;
     private CRUD crud;
     
-    public FormAdmiSoli(){
+    public FormAdmiSoli() throws SQLException {
         initComponents();
         setLocationRelativeTo(null);
         crud = new CRUD();
-        cargarPedidos();
+        cargarTodosLosPedidos();
     }
-private void cargarPedidos(){
-    DefaultTableModel model = (DefaultTableModel)jTable1.getModel();
-    model.setRowCount(0);
-    
-    try{
-        ResultSet rs = crud.obtenerPedidos();
-        while(rs.next()){
-            Object[] row={
-              rs.getInt("id"),
-              rs.getString("departamento"),
-              rs.getString("articulo"),
-              "",
-              rs.getString("estatus")
-            };/*cierre object*/
-            model.addRow(row);
-        }//CIERRE WHILE
-    }catch(SQLException e){
-        JOptionPane.showMessageDialog(null,"Error al cargar pedidos: "+e.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
-    }
-}//CIERRE CARGARPEDIDOS
 
-private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
-    String sql = "UPDATE pedidos SET id_estatus = (SELECT id FROM estatus WHERE nombre = ?) WHERE id = ?";
-    try (PreparedStatement ps = crud.conexion.prepareStatement(sql)){
-        ps.setString(1, nuevoEstatus);
-        ps.setInt(2, idPedido);
+    private void cargarTodosLosPedidos() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.setRowCount(0); // Limpiar tabla
+    
+    try {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date fechaFin = sdf.parse("2099-12-31");
+        List<Map<String, Object>> pedidos = crud.obtenerPedidosPorFechas(
+            new java.util.Date(0), // Fecha inicial (1/1/1970)
+            fechaFin     // Fecha actual
+        );
         
-        int filasAfectadas = ps.executeUpdate();
-        return filasAfectadas>0;
-    }catch(SQLException e){
-        System.out.println("Error al actualiza Estatus: "+e.getMessage());
+        for (Map<String, Object> pedido : pedidos) {
+            Object[] row = {
+                pedido.get("id"),
+                pedido.get("departamento"), // Columna "departamento"
+                pedido.get("articulo"),     // Columna "articulo"
+                pedido.get("cantidad"),     // Columna "cantidad"
+                pedido.get("estado")        // Columna "estado"
+            };
+            model.addRow(row);
+        }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar pedidos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }   catch (ParseException ex) {
+            Logger.getLogger(FormAdmiSoli.class.getName()).log(Level.SEVERE, null, ex);
+        }
+}
+    private boolean actualizarEstatus(int idPedido, String nuevoEstatus) {
+    try {
+        return crud.actualizarEstatusPedido(idPedido, nuevoEstatus);
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, 
+            "Error al actualizar estado: " + e.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
         return false;
     }
 }//FIN ACTUALIZAR
@@ -185,7 +190,7 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnAceptarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAceptarActionPerformed
-         int filaSeleccionada = jTable1.getSelectedRow();
+        int filaSeleccionada = jTable1.getSelectedRow();
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(this, "Por favor seleccione un pedido", 
                 "Advertencia", JOptionPane.WARNING_MESSAGE);
@@ -195,7 +200,7 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
         int idPedido = (int) jTable1.getValueAt(filaSeleccionada, 0);
         if (actualizarEstatus(idPedido, "Disponible para recoleccion")) {
             JOptionPane.showMessageDialog(this, "Pedido aceptado correctamente");
-            cargarPedidos(); // Refrescar la tabla
+            cargarTodosLosPedidos();
         } else {
             JOptionPane.showMessageDialog(this, "Error al aceptar el pedido", 
                 "Error", JOptionPane.ERROR_MESSAGE);
@@ -211,9 +216,9 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
         }
         
         int idPedido = (int) jTable1.getValueAt(filaSeleccionada, 0);
-        if (actualizarEstatus(idPedido, "Artiuclos no disponibles")) {
+        if (actualizarEstatus(idPedido, "Articulos no disponibles")) {
             JOptionPane.showMessageDialog(this, "Pedido rechazado correctamente");
-            cargarPedidos(); // Refrescar la tabla
+            cargarTodosLosPedidos();
         } else {
             JOptionPane.showMessageDialog(this, "Error al rechazar el pedido", 
                 "Error", JOptionPane.ERROR_MESSAGE);
@@ -231,7 +236,7 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
         int idPedido = (int) jTable1.getValueAt(filaSeleccionada, 0);
         if (actualizarEstatus(idPedido, "Entregado")) {
             JOptionPane.showMessageDialog(this, "Pedido marcado como completado");
-            cargarPedidos();
+            cargarTodosLosPedidos();
         } else {
             JOptionPane.showMessageDialog(this, "Error al completar el pedido", 
                 "Error", JOptionPane.ERROR_MESSAGE);
@@ -239,32 +244,40 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
     }//GEN-LAST:event_btnCompletadoActionPerformed
 
     private void btnBuscarSoliActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarSoliActionPerformed
-         String idPedido = txtSolicitud.getText().trim();
-        if (idPedido.isEmpty()) {
-            cargarPedidos();
+        String idPedidoStr = txtSolicitud.getText().trim();
+        if (idPedidoStr.isEmpty()) {
+            cargarTodosLosPedidos();
             return;
         }
         
         try {
-            ResultSet rs = crud.PedidoporID(idPedido);
+            int idPedido = Integer.parseInt(idPedidoStr);
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.setRowCount(0);
             
-            if (rs.next()) {
+            List<Map<String, Object>> resultados = crud.obtenerPedidosPorId(idPedido);
+            if (!resultados.isEmpty()) {
+                Map<String, Object> pedido = resultados.get(0);
                 Object[] row = {
-                    rs.getInt("id"),
-                    rs.getString("departamento"),
-                    rs.getString("articulo"),
-                    "",
-                    rs.getString("estatus")
+                    pedido.get("id"),
+                    pedido.get("departamento"),
+                    pedido.get("articulo"),
+                    pedido.get("cantidad"),
+                    pedido.get("estado")
                 };
                 model.addRow(row);
             } else {
-                JOptionPane.showMessageDialog(this, "No se encontró el pedido con ID: " + idPedido, 
+                JOptionPane.showMessageDialog(this, 
+                    "No se encontró el pedido con ID: " + idPedidoStr, 
                     "Información", JOptionPane.INFORMATION_MESSAGE);
             }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Por favor ingrese un ID de pedido válido (número)", 
+                "Error", JOptionPane.ERROR_MESSAGE);
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error al buscar pedido: " + ex.getMessage(), 
+            JOptionPane.showMessageDialog(this, 
+                "Error al buscar pedido: " + ex.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnBuscarSoliActionPerformed
@@ -305,26 +318,24 @@ private boolean actualizarEstatus(int idPedido, String nuevoEstatus){
             java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        try{
-            for(javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()){
-                if("Nimbus".equals(info.getName())){
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
-        }catch(ClassNotFoundException ex){
-            java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
-        }catch(InstantiationException ex){
-            java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
-        }catch(IllegalAccessException ex){
-            java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
-        }catch(javax.swing.UnsupportedLookAndFeelException ex){
-            java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE,null,ex);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(FormAdmiSoli.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
                 new FormAdmiSoli().setVisible(true);
+            } catch (SQLException ex) {
+                Logger.getLogger(FormAdmiSoli.class.getName()).log(Level.SEVERE, null, ex);
             }
         });
     }

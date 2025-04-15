@@ -1,53 +1,50 @@
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 
 public class Autenticador {
     private static final Logger logger = Logger.getLogger(Autenticador.class.getName());
     private final Connection conexion;
     
-    public Autenticador() {
+    public Autenticador() throws SQLException {
         this.conexion = ConexionDB.conectar();
     }
     
     public ResultadoAutenticacion autenticar(String departamento, String password) {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    
+    try {
+        String sql = "SELECT u.id, r.nombre as rol "
+                   + "FROM usuarios u "
+                   + "JOIN departamentos d ON u.id_departamento = d.id "
+                   + "JOIN roles r ON u.id_rol = r.id "
+                   + "WHERE d.nombre = ? AND u.contraseña = ? "
+                   + "LIMIT 1";
         
-        try {
-            String sql = "SELECT u.id, r.nombre as rol FROM usuarios u " +
-                       "JOIN departamentos d ON u.id_departamento = d.id " +
-                       "JOIN roles r ON u.id_rol = r.id " +
-                       "WHERE d.nombre = ? AND u.contraseña = ? " +
-                       "LIMIT 1";
-            
-            ps = conexion.prepareStatement(sql);
-            ps.setString(1, departamento);
-            ps.setString(2, password);
-            
-            rs = ps.executeQuery();
-            
-            if(rs.next()) {
-                return new ResultadoAutenticacion(
-                    true, 
-                    rs.getString("rol"), 
-                    rs.getInt("id"),
-                    departamento
-                );
-            }
-            return new ResultadoAutenticacion(false, "", -1, "");
-            
-        } catch(SQLException e) {
-            logger.log(Level.SEVERE, "Error de autenticación", e);
-            JOptionPane.showMessageDialog(null, 
-                "Error al conectar con la base de datos", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return new ResultadoAutenticacion("error", "", -1, "");
-        } finally {
-            cerrarRecursos(ps, rs);
+        ps = conexion.prepareStatement(sql);
+        ps.setString(1, departamento);
+        ps.setString(2, password);
+        
+        rs = ps.executeQuery();
+        
+        if(rs.next()) {
+            return new ResultadoAutenticacion(
+                true, 
+                rs.getString("rol"), 
+                rs.getInt("id"),
+                departamento
+            );
         }
+        return new ResultadoAutenticacion(false, "", -1, "");
+        
+    } catch(SQLException e) {
+        logger.log(Level.SEVERE, "Error de autenticación", e);
+        return new ResultadoAutenticacion("error", "", -1, "");
+    } finally {
+        cerrarRecursos(ps, rs);
     }
+}
     
     private void cerrarRecursos(PreparedStatement ps, ResultSet rs) {
         try { if(rs != null) rs.close(); } catch(Exception e) {
@@ -101,4 +98,20 @@ public class Autenticador {
         public boolean isError() { return !estadoError.isEmpty(); }
         public String getEstadoError() { return estadoError; }
     }
+    
+    public int obtenerUserId(String departamento, String password) throws SQLException {
+    String sql = "SELECT id FROM usuarios u " +
+               "JOIN departamentos d ON u.id_departamento = d.id " +
+               "WHERE d.nombre = ? AND u.contraseña = ? " +
+               "LIMIT 1";
+    
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, departamento);
+            ps.setString(2, password);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id") : -1;
+            }
+        }
+    }   
 }

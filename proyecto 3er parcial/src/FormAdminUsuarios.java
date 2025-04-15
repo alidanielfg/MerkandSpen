@@ -1,84 +1,41 @@
-import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 public class FormAdminUsuarios extends javax.swing.JFrame {
-    private UserCRUD userCRUD = null;
-    private DefaultTableModel modeloTabla = null;
+    private CRUD crud;
+    private int userId;
 
-    public FormAdminUsuarios() {
-        try {
-            userCRUD = new UserCRUD();
-            modeloTabla = new DefaultTableModel(new String[]{"ID", "Departamento", "Rol"}, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) { return false; }
-            };
-            initComponents();
-            configurarInterfaz();
-        } catch (SQLException e) {
-            mostrarErrorConexion();
-        }
-    }
-
-    private void configurarInterfaz() {
-        jTable1.setModel(modeloTabla);
+    public FormAdminUsuarios(int userId) throws SQLException {
+        this.userId = userId;
+        initComponents();
+        crud = new CRUD();
+        setLocationRelativeTo(null);
         cargarUsuarios();
     }
 
     private void cargarUsuarios() {
-        try {
-            modeloTabla.setRowCount(0);
-            List<UserCRUD.Usuario> usuarios = userCRUD.obtenerUsuarios();
-            
-            for(UserCRUD.Usuario usuario : usuarios) {
-                modeloTabla.addRow(new Object[]{
+            try {
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+            modelo.setRowCount(0); // Limpiar la tabla
+
+            List<CRUD.Usuario> usuarios = crud.obtenerUsuarios();
+            for (CRUD.Usuario usuario : usuarios) {
+                modelo.addRow(new Object[]{
                     usuario.getId(),
                     usuario.getDepartamento(),
-                    usuario.getRol()
+                    usuario.getRol()  // Asegúrate de incluir el rol
                 });
             }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage(),
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, 
+                "Error al cargar usuarios: " + ex.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private void eliminarUsuario() {
-        try {
-            int idUsuario = Integer.parseInt(txtId.getText().trim());
-            
-            if(!userCRUD.usuarioExiste(idUsuario)) {
-                JOptionPane.showMessageDialog(this, "Usuario no encontrado", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            int confirmacion = JOptionPane.showConfirmDialog(this,
-                "¿Eliminar usuario ID " + idUsuario + "?", 
-                "Confirmar", JOptionPane.YES_NO_OPTION);
-
-            if(confirmacion == JOptionPane.YES_OPTION && userCRUD.eliminarUsuario(idUsuario)) {
-                JOptionPane.showMessageDialog(this, "Usuario eliminado", 
-                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                cargarUsuarios();
-            }
-        } catch (NumberFormatException | SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void mostrarErrorConexion() {
-        JOptionPane.showMessageDialog(this, "Error de conexión a la base de datos",
-            "Error crítico", JOptionPane.ERROR_MESSAGE);
-        System.exit(1);
-    }
-
-    @Override
-    public void dispose() {
-        userCRUD.cerrarConexion();
-        super.dispose();
     }
 
     @SuppressWarnings("unchecked")
@@ -92,6 +49,8 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         txtId = new javax.swing.JTextField();
         btnRegresar = new javax.swing.JButton();
+        btnNuevoUsu = new javax.swing.JButton();
+        btnEditar = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
 
@@ -102,13 +61,13 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "Id", "Departamento"
+                "Id", "Departamento", "Rol"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
@@ -130,6 +89,20 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
             }
         });
 
+        btnNuevoUsu.setText("Agregar Usuario");
+        btnNuevoUsu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNuevoUsuActionPerformed(evt);
+            }
+        });
+
+        btnEditar.setText("Editar Usuario");
+        btnEditar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarActionPerformed(evt);
+            }
+        });
+
         jMenu1.setText("Merk and Spen");
         jMenuBar1.add(jMenu1);
 
@@ -139,15 +112,14 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(127, 127, 127)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(75, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnRegresar, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 356, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(56, 56, 56)
@@ -157,27 +129,33 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
                                 .addGap(47, 47, 47))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(btnEliminar)
-                                .addGap(22, 22, 22))))
-                    .addComponent(btnRegresar, javax.swing.GroupLayout.Alignment.TRAILING)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(btnEliminar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnNuevoUsu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnEditar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(22, 22, 22))))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(btnRegresar)
-                .addGap(29, 29, 29)
-                .addComponent(jLabel1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(29, 29, 29)
+                        .addComponent(jLabel1)
                         .addGap(39, 39, 39)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(109, 109, 109)
+                        .addGap(163, 163, 163)
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnEliminar)))
+                        .addComponent(btnEliminar)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnNuevoUsu)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnEditar)))
                 .addContainerGap(55, Short.MAX_VALUE))
         );
 
@@ -185,14 +163,86 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
-        eliminarUsuario();
+        int filaSeleccionada = jTable1.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, 
+                "Seleccione un usuario para eliminar",
+                "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int idUsuario = (int) jTable1.getValueAt(filaSeleccionada, 0);
+        String departamento = (String) jTable1.getValueAt(filaSeleccionada, 1);
+        
+        int confirmacion = JOptionPane.showConfirmDialog(this,
+            "¿Eliminar usuario " + idUsuario + " del departamento " + departamento + "?",
+            "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+        
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            try {
+                if (crud.eliminarUsuario(idUsuario)) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Usuario eliminado correctamente",
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    cargarUsuarios();
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(this, 
+                    "Error al eliminar usuario: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
-        new adminUsuarios().setVisible(true);
+        try {
+            new interfazAdmin().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FormAdminUsuarios.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
 
+    private void btnNuevoUsuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoUsuActionPerformed
+        try {
+            new FromNusuario().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FormAdminUsuarios.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.dispose();
+    }//GEN-LAST:event_btnNuevoUsuActionPerformed
+
+    private void btnEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarActionPerformed
+         int filaSeleccionada = jTable1.getSelectedRow();
+    if (filaSeleccionada == -1) {
+        JOptionPane.showMessageDialog(this, 
+            "Seleccione un usuario para editar",
+            "Advertencia", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    try {
+        // Obtener los valores directamente del modelo
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        int idUsuario = (Integer) modelo.getValueAt(filaSeleccionada, 0);
+        String departamento = (String) modelo.getValueAt(filaSeleccionada, 1);
+        String rol = (String) modelo.getValueAt(filaSeleccionada, 2);
+        
+        new FormEditar(idUsuario, departamento, rol).setVisible(true);
+        this.dispose();
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this,
+            "Error al obtener datos del usuario: " + e.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    this.dispose();
+    }//GEN-LAST:event_btnEditarActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) throws SQLException {                                          
+        new interfazAdmin().setVisible(true);
+        this.dispose();
+    }
     /**
      * @param args the command line arguments
      */
@@ -223,13 +273,19 @@ public class FormAdminUsuarios extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new FormAdminUsuarios().setVisible(true);
+                try {
+                    new FormAdminUsuarios(0).setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(FormAdminUsuarios.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnEditar;
     private javax.swing.JButton btnEliminar;
+    private javax.swing.JButton btnNuevoUsu;
     private javax.swing.JButton btnRegresar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

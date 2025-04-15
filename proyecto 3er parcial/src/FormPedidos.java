@@ -1,110 +1,134 @@
 import javax.swing.table.DefaultTableModel;
 import java.sql.SQLException;
-import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class FormPedidos extends javax.swing.JFrame {
-    private CRUD crud;
+    private final CRUD crud;
     private DefaultTableModel modeloTabla;
-    /**
-     * Creates new form FormPedidos
-     */
-    public FormPedidos() {
+    private final int userId;
+    private final String departamento;
+    
+    public FormPedidos(int userId) throws SQLException {
+        Sesion sesion = Sesion.getInstance();
+        this.userId = userId;
+        this.departamento = sesion.getDepartamento();
+        this.crud = new CRUD();
+        
         initComponents();
-        crud = new CRUD();
         iniTabla();
-        cargaPedidos();
+        cargarPedidosPorDepartamento();
         setLocationRelativeTo(null);
+        setTitle("Pedidos - " + departamento);
     }
+
     
     private void iniTabla() {
-    modeloTabla = new DefaultTableModel() {
-        @Override
-        public boolean isCellEditable(int row, int column) {
-            return false;
-        }
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return columnIndex == 0 ? Integer.class : String.class;
-        }
-    };
+        modeloTabla = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return columnIndex == 0 ? Integer.class : String.class;
+            }
+        };
+        
+        modeloTabla.addColumn("ID");
+        modeloTabla.addColumn("Artículo");
+        modeloTabla.addColumn("Cantidad");
+        modeloTabla.addColumn("Fecha");
+        modeloTabla.addColumn("Estado");
+        
+        jTable1.setModel(modeloTabla);
+    }
     
-    modeloTabla.addColumn("ID");
-    modeloTabla.addColumn("Departamento");
-    modeloTabla.addColumn("Artículo");
-    modeloTabla.addColumn("Estatus");
-    
-    jTable1.setModel(modeloTabla);
-}
-    
-private void cargaPedidos() {
-    modeloTabla.setRowCount(0);
-    ResultSet rs = crud.obtenerPedidos();
-    
-    if(rs != null) {
+    private void cargarPedidosPorDepartamento() {
         try {
-            while(rs.next()) {
-                Object[] fila = {
-                    rs.getInt("id"),
-                    rs.getString("departamento"),
-                    rs.getString("articulo"),
-                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
-                };
-                modeloTabla.addRow(fila);
+            modeloTabla.setRowCount(0);
+            List<Map<String, Object>> pedidos = crud.obtenerPedidosPorDepartamento(departamento);
+            
+            for (Map<String, Object> pedido : pedidos) {
+                modeloTabla.addRow(new Object[]{
+                    pedido.get("id"),
+                    pedido.get("articulo"),
+                    pedido.get("cantidad"),
+                    pedido.get("fecha_solicitud"),
+                    pedido.get("estado")
+                });
             }
-        } catch(SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al leer datos: " + e.getMessage(), 
+        } catch (SQLException ex) {
+            Logger.getLogger(FormPedidos.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, 
+                "Error al cargar pedidos: " + ex.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if(rs != null) rs.close();
-            } catch(SQLException e) {
-                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
-            }
         }
     }
-}//FIN CARGAR PEDIDOS
+    
+    private String obtenerDepartamentoUsuario(int idUsuario) throws SQLException {
+        List<CRUD.Usuario> usuarios = crud.obtenerUsuarios();
+        for (CRUD.Usuario usuario : usuarios) {
+            if (usuario.getId() == idUsuario) {
+                return usuario.getDepartamento();
+            }
+        }
+        return null;
+    }
     
     private void buscarPedido() {
-    String idPedido = txtIdPedido.getText().trim();
-    if(idPedido.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Ingrese un ID de pedido", 
-            "Advertencia", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-    
-    modeloTabla.setRowCount(0);
-    ResultSet rs = crud.PedidoporID(idPedido);
-    
-    if(rs != null) {
+        String idPedido = txtIdPedido.getText().trim();
+        if (idPedido.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Por favor ingrese un ID de pedido", 
+                "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
         try {
-            if(rs.next()) {
-                Object[] fila = {
-                    rs.getInt("id"),
-                    rs.getString("departamento"),
-                    rs.getString("articulo"),
-                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
-                };
-                modeloTabla.addRow(fila);
+            int id = Integer.parseInt(idPedido);
+            modeloTabla.setRowCount(0);
+            
+            // Verificar si el pedido pertenece al departamento del usuario
+            List<Map<String, Object>> pedidos = crud.obtenerPedidosPorId(id);
+            
+            if (!pedidos.isEmpty()) {
+                Map<String, Object> pedido = pedidos.get(0);
+                String departamentoPedido = (String) pedido.get("departamento");
+                String departamentoUsuario = obtenerDepartamentoUsuario(userId);
+                
+                if (departamentoPedido.equals(departamentoUsuario)) {
+                    modeloTabla.addRow(new Object[]{
+                        pedido.get("id"),
+                        pedido.get("articulo"),
+                        pedido.get("cantidad"),
+                        pedido.get("fecha_solicitud"),
+                        pedido.get("estado")
+                    });
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "No tiene permisos para ver este pedido", 
+                        "Acceso denegado", JOptionPane.WARNING_MESSAGE);
+                }
             } else {
-                JOptionPane.showMessageDialog(null, 
+                JOptionPane.showMessageDialog(this, 
                     "No se encontró el pedido con ID: " + idPedido, 
                     "Información", JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch(SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al leer datos: " + e.getMessage(), 
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, 
+                "El ID debe ser un número válido", 
                 "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if(rs != null) rs.close();
-            } catch(SQLException e) {
-                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
-            }
+        } catch (SQLException ex) {
+            Logger.getLogger(FormPedidos.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, 
+                "Error al buscar pedido: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-}
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -123,7 +147,7 @@ private void cargaPedidos() {
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 18)); // NOI18N
         jLabel1.setText("Adminstración de usuarios");
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel2.setFont(new java.awt.Font("Yu Gothic UI Semibold", 0, 18)); // NOI18N
         jLabel2.setText("Historial de pedidos");
@@ -218,66 +242,7 @@ private void cargaPedidos() {
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarActionPerformed
-    String idPedido = txtIdPedido.getText().trim();
-
-    if(idPedido.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Por favor ingrese un ID de pedido", 
-            "Campo vacío", 
-            JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    try {
-        Integer.parseInt(idPedido);
-    } catch(NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, 
-            "El ID debe ser un número válido", 
-            "ID inválido", 
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
- 
-    modeloTabla.setRowCount(0);
-    
-
-    ResultSet rs = crud.PedidoporID(idPedido);
-    
-    if(rs != null) {
-        try {
-            if(rs.next()) {
-                // Agregar el pedido encontrado a la tabla de la DB
-                Object[] fila = {
-                    rs.getInt("id"),
-                    rs.getString("departamento"),
-                    rs.getString("articulo"),
-                    rs.getString("estatus") != null ? rs.getString("estatus") : "Sin estatus"
-                };
-                modeloTabla.addRow(fila);
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "No se encontró ningún pedido con ID: " + idPedido, 
-                    "Pedido no encontrado", 
-                    JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch(SQLException e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error al leer datos: " + e.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                if(rs != null) rs.close();
-            } catch(SQLException e) {
-                System.out.println("Error al cerrar ResultSet: " + e.getMessage());
-            }
-        }
-    } else {
-        JOptionPane.showMessageDialog(this, 
-            "Error al realizar la búsqueda", 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-    }
+     buscarPedido();
     }//GEN-LAST:event_btnBuscarActionPerformed
 
     /**
@@ -307,14 +272,25 @@ private void cargaPedidos() {
         }
         //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FormPedidos().setVisible(true);
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
             }
-        });
-    }
+        } catch (Exception ex) {
+            System.err.println("Error setting look and feel: " + ex.getMessage());
+        }
 
+            java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new login().setVisible(true);
+            } catch (SQLException ex) {
+                Logger.getLogger(FormPedidos.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            });
+        }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnRegresar;

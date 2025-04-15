@@ -1,4 +1,5 @@
 import java.sql.SQLException;
+import java.sql.Connection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -8,7 +9,7 @@ public class login extends javax.swing.JFrame {
     private final DepartamentoDAO departamentoDAO;
     private final Autenticador autenticador;
     
-    public login() {
+    public login() throws SQLException {
         this.departamentoDAO = new DepartamentoDAO();
         this.autenticador = new Autenticador();
         initComponents();
@@ -44,12 +45,20 @@ public class login extends javax.swing.JFrame {
     }
     
     private void verificarConexion() {
-        if(departamentoDAO != null) {
-            JOptionPane.showMessageDialog(this, "Conectado", "Conexión", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo conectar", "Conexión", JOptionPane.ERROR);
+    try {
+        Connection testConn = ConexionDB.conectar();
+        if (testConn != null && !testConn.isClosed()) {
+            System.out.println("Conexión establecida correctamente");
+            testConn.close();
         }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, 
+            "No se pudo conectar a la base de datos: " + e.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+        System.exit(1);
     }
+}
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -184,13 +193,20 @@ public class login extends javax.swing.JFrame {
     String password = new String(txtPassword.getPassword()).trim();
         String departamento = (String) opcionesBox.getSelectedItem();
         
-        if(validarCampos(password)) {
+        if(validarCampos(password, departamento)) {
             Autenticador.ResultadoAutenticacion resultado = autenticador.autenticar(departamento, password);
             procesarResultadoAutenticacion(resultado);
         }
     }
     
-    private boolean validarCampos(String password) {
+    private boolean validarCampos(String password, String departamento) {
+        if(departamento == null || departamento.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "Debe seleccionar un departamento", 
+                "Validación", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        
         if(password.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
                 "La contraseña no puede estar vacía", 
@@ -202,49 +218,74 @@ public class login extends javax.swing.JFrame {
     }//GEN-LAST:event_btnIngresarActionPerformed
 
     private void procesarResultadoAutenticacion(Autenticador.ResultadoAutenticacion resultado) {
-        if(resultado.isError()) {
-            JOptionPane.showMessageDialog(this, 
-                "Error en la autenticación", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        if(resultado.isAutenticado()) {
-            abrirInterfazSegunRol(resultado);
-            this.dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Credenciales incorrectas", 
-                "Acceso denegado", JOptionPane.ERROR_MESSAGE);
-            txtPassword.setText("");
-            txtPassword.requestFocus();
-        }
+    if(resultado.isError()) {
+        JOptionPane.showMessageDialog(this, 
+            "Error de conexión con la base de datos", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        return;
     }
     
-    private void abrirInterfazSegunRol(Autenticador.ResultadoAutenticacion resultado) {
+    if(resultado.isAutenticado()) {
         try {
-            switch(resultado.getRol().toLowerCase()) {
-                case "admin":
-                    new interfazAdmin().setVisible(true);
-                    break;
-                case "usuario":
-                    new interfazUsuario().setVisible(true);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(this, 
-                        "Rol no reconocido: " + resultado.getRol(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
+            Sesion sesion = Sesion.getInstance();
+            sesion.crearSesion(
+                resultado.getUserId(), 
+                resultado.getDepartamento(), 
+                resultado.getRol()
+            );
+            
+            abrirInterfazSegunRol();
+            this.dispose();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al crear la sesión: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
+    } else {
+        JOptionPane.showMessageDialog(this, 
+            "Departamento o contraseña incorrectos", 
+            "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+        txtPassword.setText("");
+        txtPassword.requestFocus();
     }
+}
+
+    
+    private void abrirInterfazSegunRol() {
+    try {
+        Sesion sesion = Sesion.getInstance();
+        String rol = sesion.getRol().toLowerCase();
+        
+        switch(rol) {
+            case "admin":
+                new interfazAdmin().setVisible(true);
+                break;
+            case "usuario":
+                new interfazUsuario().setVisible(true);
+                break;
+            default:
+                JOptionPane.showMessageDialog(this, 
+                    "Rol no configurado: " + rol, 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                sesion.cerrarSesion();
+                new login().setVisible(true);
+        }
+    } catch (Exception ex) {
+        Logger.getLogger(login.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(this,
+            "Error al cargar la interfaz: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
     
     @Override
     public void dispose() {
-        departamentoDAO.cerrarConexion();
-        autenticador.cerrarConexion();
-        super.dispose();
+        try {
+            departamentoDAO.cerrarConexion();
+            autenticador.cerrarConexion();
+        } finally {
+            super.dispose();
+        }
     }
     
     /**
@@ -275,11 +316,37 @@ public class login extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new login().setVisible(true);
+        try {
+        for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+            if ("Nimbus".equals(info.getName())) {
+                javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                break;
             }
-        });
+        }
+    } catch (Exception ex) {
+        System.err.println("Error al configurar el look and feel: " + ex.getMessage());
+    }
+
+    // Ejecución segura de la aplicación
+    java.awt.EventQueue.invokeLater(new Runnable() {
+        public void run() {
+            try {
+                // Verificar conexión antes de crear el login
+                Connection testConn = ConexionDB.conectar();
+                if (testConn != null) {
+                    testConn.close();
+                }
+                
+                new login().setVisible(true);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null,
+                    "Error al iniciar la aplicación: " + e.getMessage(),
+                    "Error crítico", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+    });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

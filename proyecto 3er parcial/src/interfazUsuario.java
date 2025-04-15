@@ -4,13 +4,30 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class interfazUsuario extends javax.swing.JFrame {
-    private UserCRUD crud;
+    private final CRUD crud;
+    private final int userId;
+    private final String departamento;
 
-    
     public interfazUsuario() throws SQLException {
-        crud = new UserCRUD();
-        initComponents();
-        setLocationRelativeTo(null);
+        Sesion sesion = Sesion.getInstance();
+        this.userId = sesion.getUserId();
+        this.departamento = sesion.getDepartamento();
+        this.crud = new CRUD();
+        
+        // Validar el ID de usuario
+    if (this.userId <= 0) {
+        JOptionPane.showMessageDialog(null, 
+            "Sesión no válida. Redirigiendo al login...", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        sesion.cerrarSesion();
+        new login().setVisible(true);
+        this.dispose();
+        return;
+    }
+    
+    initComponents();
+    setLocationRelativeTo(null);
+    setTitle("Usuario: " + departamento);
     }
 
     /**
@@ -25,11 +42,12 @@ public class interfazUsuario extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
+        btnPerfil = new javax.swing.JButton();
         btnVerInventario = new javax.swing.JButton();
         btnSolicitar = new javax.swing.JButton();
         btnVerPedidos = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jPanel1.setBackground(new java.awt.Color(137, 166, 124));
 
@@ -43,6 +61,13 @@ public class interfazUsuario extends javax.swing.JFrame {
             }
         });
 
+        btnPerfil.setText("Perfil");
+        btnPerfil.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPerfilActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -52,13 +77,16 @@ public class interfazUsuario extends javax.swing.JFrame {
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 323, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(144, 144, 144))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(btnPerfil)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton1))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jButton1)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(btnPerfil))
                 .addGap(16, 16, 16)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(45, Short.MAX_VALUE))
@@ -115,34 +143,56 @@ public class interfazUsuario extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSolicitarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitarActionPerformed
-        new FormSolicitarArti().setVisible(true);
+        try {
+        new FormSolicitarArti(userId).setVisible(true); // Pasar el userId
+        this.dispose();
+    } catch (SQLException ex) {
+        Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(this, 
+            "Error al abrir formulario de solicitud: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
         this.dispose();
     }//GEN-LAST:event_btnSolicitarActionPerformed
 
     private void btnVerInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerInventarioActionPerformed
-        new InventarioUsua().setVisible(true);
+        try {
+            new InventarioUsua().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnVerInventarioActionPerformed
 
     private void btnVerPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerPedidosActionPerformed
-        new FormPedidos().setVisible(true);
+        try {
+            new FormPedidos(userId).setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnVerPedidosActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+         Sesion.getInstance().cerrarSesion();
         try {
-        crud.cerrar();
-
-        this.dispose();
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, 
-            "Error al cerrar la aplicación: " + e.getMessage(),
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
-    }
-    
-    new login().setVisible(true);
+            crud.cerrarConexion();
+            this.dispose();
+            new login().setVisible(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al cerrar la aplicación: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void btnPerfilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPerfilActionPerformed
+        try {
+            new FromPerfil().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnPerfilActionPerformed
 
     /**
      * @param args the command line arguments
@@ -173,17 +223,38 @@ public class interfazUsuario extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    new interfazUsuario().setVisible(true);
-                } catch (SQLException ex) {
-                    Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+        public void run() {
+            try {
+                // Verificar sesión
+                Sesion sesion = Sesion.getInstance();
+                if (!sesion.isActiva()) {
+                    JOptionPane.showMessageDialog(null,
+                        "Debe iniciar sesión primero",
+                        "Sesión requerida", JOptionPane.WARNING_MESSAGE);
+                    new login().setVisible(true);
+                    return;
                 }
+                
+                // Verificar que no sea administrador (opcional)
+                if ("admin".equalsIgnoreCase(sesion.getRol())) {
+                    new interfazAdmin().setVisible(true); // Redirigir a admin si tiene ese rol
+                    return;
+                }
+                
+                // Si todo está bien, mostrar la interfaz
+                new interfazUsuario().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(interfazUsuario.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null,
+                    "Error al iniciar la interfaz: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        }
+    });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnPerfil;
     private javax.swing.JButton btnSolicitar;
     private javax.swing.JButton btnVerInventario;
     private javax.swing.JButton btnVerPedidos;

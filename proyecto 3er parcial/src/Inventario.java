@@ -1,32 +1,31 @@
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import org.jfree.chart.*;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jfree.chart.plot.PlotOrientation;
-import javax.swing.table.DefaultTableModel;
-import org.jfree.data.category.DefaultCategoryDataset;
-import javax.swing.JTextField;
-
 
 public class Inventario extends javax.swing.JFrame {
-    private inventarioCRUD crud;
+    private CRUD crud;
     private Timer timerActualizacion;
     private ChartPanel chartPanel;
+    private ArticuloDAO articuloDAO;
     
-    public Inventario() {
+    public Inventario() throws SQLException {
         initComponents();
-        crud = new inventarioCRUD();
+        crud = new CRUD();
         initGrafica();
         iniciarActualizacionAutomatica();
-        LlenarTabla();
+        llenarTabla();
         setLocationRelativeTo(null);
+        articuloDAO = new ArticuloDAO(crud.getConexion());
         
         opcionDescarga.setModel(new DefaultComboBoxModel<>(new String[] {
             "Descargar reporte...",
@@ -36,31 +35,37 @@ public class Inventario extends javax.swing.JFrame {
         }));
     }
     
-    private void LlenarTabla(){
-        try{
-            ResultSet resultados = crud.obtenerArticulos();
-            DefaultTableModel modelo= (DefaultTableModel) jTable1.getModel();
+    void llenarTabla() {
+        try {
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
             modelo.setRowCount(0);
             
-            while(resultados != null && resultados.next()){
-                modelo.addRow(new Object[]{
-                    resultados.getInt("id"),
-                    resultados.getString("nombre"),
-                    resultados.getString("descripcion"),
-                    resultados.getInt("cantidad"),
-                    resultados.getInt("stock")
-                });               
+            String sql = "SELECT a.id, a.nombre, a.descripcion, a.cantidad, a.id_categoria, i.stock " +
+                         "FROM articulos a JOIN inventarios i ON a.id = i.id_articulo ORDER BY a.nombre";
+            
+            try (PreparedStatement ps = crud.getConexion().prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    modelo.addRow(new Object[]{
+                        rs.getInt("id"),
+                        rs.getString("nombre"),
+                        rs.getString("descripcion"),
+                        rs.getInt("cantidad"),
+                        rs.getInt("stock")
+                    });               
+                }
             }
-        }catch(SQLException ex){
-            JOptionPane.showMessageDialog(null,"Error al cargar inventario"+ex.getMessage(),"Error",JOptionPane.ERROR_MESSAGE);
+        } catch(SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error al cargar inventario: " + ex.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
     }
     
-    private void initGrafica(){
+    private void initGrafica() {
         JFreeChart chart = ChartFactory.createBarChart(
-            "5 Articulos mas solicitados",
-            "Articulos",
+            "5 Artículos más solicitados",
+            "Artículos",
             "Solicitudes",
             new DefaultCategoryDataset(),
             PlotOrientation.HORIZONTAL,
@@ -71,34 +76,36 @@ public class Inventario extends javax.swing.JFrame {
         
         chartPanel = new ChartPanel(chart);
         chartPanel.setMouseWheelEnabled(true);
-        chartPanel.setPreferredSize(new Dimension(650,200));
+        chartPanel.setPreferredSize(new Dimension(650, 200));
         
         jPanel1.setLayout(new BorderLayout());
-        jPanel1.add(chartPanel,BorderLayout.NORTH);
+        jPanel1.add(chartPanel, BorderLayout.NORTH);
         
         pack();
         repaint();
     }
     
-    private void actualizarGrafica() throws SQLException{
+    private void actualizarGrafica() throws SQLException {
         DefaultCategoryDataset nuevosDatos = crud.obtenerTopSolicitudes();
         JFreeChart chart = chartPanel.getChart();
         chart.getCategoryPlot().setDataset(nuevosDatos);
     }
     
-    private void iniciarActualizacionAutomatica(){
+    private void iniciarActualizacionAutomatica() {
         timerActualizacion = new Timer(5000, e -> {
             try {
                 actualizarGrafica();
             } catch (SQLException ex) {
-                Logger.getLogger(Inventario.class.getName()).log(Level.SEVERE, null, ex);
+                ex.printStackTrace();
             }
         });
         timerActualizacion.start();
     }
     
-    public void dispose(){
+    @Override
+    public void dispose() {
         if(timerActualizacion != null) timerActualizacion.stop();
+        crud.cerrarConexion();
         super.dispose();
     }
     
@@ -114,6 +121,7 @@ public class Inventario extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         opcionDescarga = new javax.swing.JComboBox<>();
         btnEliminar = new javax.swing.JButton();
+        btnEditar = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu4 = new javax.swing.JMenu();
         Opciones = new javax.swing.JMenu();
@@ -121,7 +129,7 @@ public class Inventario extends javax.swing.JFrame {
         btnPedidos = new javax.swing.JMenuItem();
         btnVolver = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 2, 24)); // NOI18N
         jLabel1.setText("Inventario");
@@ -170,6 +178,13 @@ public class Inventario extends javax.swing.JFrame {
         btnEliminar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnEliminarActionPerformed(evt);
+            }
+        });
+
+        btnEditar.setText("Editar Artículo");
+        btnEditar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEditarActionPerformed(evt);
             }
         });
 
@@ -229,7 +244,8 @@ public class Inventario extends javax.swing.JFrame {
                             .addComponent(txtArticulo)
                             .addComponent(btnBuscarNombre, javax.swing.GroupLayout.DEFAULT_SIZE, 167, Short.MAX_VALUE)
                             .addComponent(opcionDescarga, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnEliminar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(btnEliminar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnEditar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(43, 43, 43))))
         );
         layout.setVerticalGroup(
@@ -247,7 +263,9 @@ public class Inventario extends javax.swing.JFrame {
                         .addComponent(opcionDescarga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(btnEliminar)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 70, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addComponent(btnEditar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
@@ -261,7 +279,7 @@ public class Inventario extends javax.swing.JFrame {
 
     private void btnBuscarNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarNombreActionPerformed
     String nombreBusqueda = txtArticulo.getText().trim();
-        
+            
         if(nombreBusqueda.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
                 "Debe ingresar un nombre para buscar", 
@@ -271,19 +289,18 @@ public class Inventario extends javax.swing.JFrame {
         }
         
         try {
-            ResultSet resultados = crud.obtenerArticuloPorNombre(nombreBusqueda);
             DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
             modelo.setRowCount(0);
             
             boolean encontrado = false;
-            while(resultados != null && resultados.next()) {
+            for (CRUD.Articulo articulo : crud.buscarArticulosPorNombre(nombreBusqueda)) {
                 encontrado = true;
                 modelo.addRow(new Object[]{
-                    resultados.getInt("id"),
-                    resultados.getString("nombre"),
-                    resultados.getString("descripcion"),
-                    resultados.getInt("cantidad"),
-                    resultados.getInt("stock")
+                    articulo.getId(),
+                    articulo.getNombre(),
+                    articulo.getDescripcion(),
+                    articulo.getCantidad(),
+                    articulo.getStock()
                 });
             }
             
@@ -293,8 +310,7 @@ public class Inventario extends javax.swing.JFrame {
                     "Información", 
                     JOptionPane.INFORMATION_MESSAGE);
             }
-        } 
-        catch(SQLException ex) {
+        } catch(SQLException ex) {
             JOptionPane.showMessageDialog(this, 
                 "Error al buscar en la base de datos: " + ex.getMessage(), 
                 "Error", 
@@ -303,7 +319,6 @@ public class Inventario extends javax.swing.JFrame {
         }
         
         limpiar();
-    
     }//GEN-LAST:event_btnBuscarNombreActionPerformed
 
     private void opcionDescargaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_opcionDescargaActionPerformed
@@ -339,16 +354,23 @@ public class Inventario extends javax.swing.JFrame {
         }
         
         opcionDescarga.setSelectedIndex(0);
-    
     }//GEN-LAST:event_opcionDescargaActionPerformed
 
     private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
-        new FormAdminUsuarios().setVisible(true);
+        try {
+            new FormAdminUsuarios(0).setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(Inventario.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnUsuariosActionPerformed
 
     private void btnPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPedidosActionPerformed
-       new FormAdmiSoli().setVisible(true);
+        try {
+            new FormAdmiSoli().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(Inventario.class.getName()).log(Level.SEVERE, null, ex);
+        }
        this.dispose();
     }//GEN-LAST:event_btnPedidosActionPerformed
 
@@ -389,7 +411,7 @@ public class Inventario extends javax.swing.JFrame {
                 "Artículo eliminado correctamente", 
                 "Éxito", 
                 JOptionPane.INFORMATION_MESSAGE);
-            LlenarTabla();
+            llenarTabla();
         } else {
             JOptionPane.showMessageDialog(null, 
                 "Error al eliminar el artículo", 
@@ -398,25 +420,64 @@ public class Inventario extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnEliminarActionPerformed
 
+    private void btnEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarActionPerformed
+        int filaSeleccionada = jTable1.getSelectedRow();
+    
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, 
+                "Por favor seleccione un artículo para editar", 
+                "Advertencia", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+    
+        int idArticulo = (int) jTable1.getValueAt(filaSeleccionada, 0);
+        FormEditarArti formEditar = new FormEditarArti(idArticulo, this, crud.getConexion());
+        formEditar.setVisible(true);
+    }//GEN-LAST:event_btnEditarActionPerformed
+
     private void limpiar() {
     txtArticulo.setText("");
 }
 
 public static void main(String args[]) {
-    try {
-        for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-            if ("Nimbus".equals(info.getName())) {
-                javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                break;
-            }
-        }
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-        java.util.logging.Logger.getLogger(Inventario.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-    }
-    java.awt.EventQueue.invokeLater(new Runnable() {
-        @Override
+     java.awt.EventQueue.invokeLater(new Runnable() {
         public void run() {
-            new Inventario().setVisible(true);
+            try {
+                // Verificar sesión
+                Sesion sesion = Sesion.getInstance();
+                if (!sesion.isActiva()) {
+                    JOptionPane.showMessageDialog(null,
+                        "Acceso restringido a usuarios autenticados",
+                        "Sesión requerida", JOptionPane.WARNING_MESSAGE);
+                    new login().setVisible(true);
+                    return;
+                }
+                
+                // Verificar permisos (solo admin o almacén)
+                String rol = sesion.getRol();
+                if (!"admin".equalsIgnoreCase(rol) && !"almacen".equalsIgnoreCase(rol)) {
+                    JOptionPane.showMessageDialog(null,
+                        "No tiene permisos para acceder al inventario",
+                        "Acceso denegado", JOptionPane.ERROR_MESSAGE);
+                        
+                    // Redirigir según rol
+                    if ("usuario".equalsIgnoreCase(rol)) {
+                        new interfazUsuario().setVisible(true);
+                    } else {
+                        new login().setVisible(true);
+                    }
+                    return;
+                }
+                
+                // Si todo está bien, mostrar la interfaz
+                new Inventario().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(Inventario.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null,
+                    "Error al iniciar el inventario: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     });
 }
@@ -424,6 +485,7 @@ public static void main(String args[]) {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu Opciones;
     private javax.swing.JButton btnBuscarNombre;
+    private javax.swing.JButton btnEditar;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JMenuItem btnPedidos;
     private javax.swing.JMenuItem btnUsuarios;

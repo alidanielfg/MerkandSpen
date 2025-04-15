@@ -5,57 +5,85 @@
 
 import javax.swing.*;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class FromPerfil extends javax.swing.JFrame {
-    private final UserCRUD userCRUD = null;
-    private final int userId = 0;
+    private final CRUD crud;
+    private final int userId;
+    private final String departamento;
+    private final String rol;
 
-    public FromPerfil(int userId) {
-        initComponents(); // Solo si es necesario
+    public FromPerfil() throws SQLException {
+        // Obtener datos de la sesión
+        Sesion sesion = Sesion.getInstance();
+        this.userId = sesion.getUserId();
+        this.departamento = sesion.getDepartamento();
+        this.rol = sesion.getRol();
+        this.crud = new CRUD();
+        
+        initComponents();
+        configurarInterfaz();
         cargarDatosUsuario();
         setLocationRelativeTo(null);
-}
-
-    private FromPerfil() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        setTitle("Perfil de Usuario");
     }
-
+    
+    private void configurarInterfaz() {
+        // Bloquear campos que no deben ser editables
+        txtDepartamento.setEditable(false);
+        txtRol.setEditable(false);
+        
+        // Establecer colores de fondo para campos no editables
+        txtDepartamento.setBackground(new java.awt.Color(250, 245, 130));
+        txtRol.setBackground(new java.awt.Color(250, 245, 130));
+    }
+    
     private void cargarDatosUsuario() {
-    try {
-        UserCRUD.Usuario usuario = userCRUD.obtenerUsuario(userId);
-        if (usuario != null) {
-            txtRol.setText(usuario.getRol());
-            txtDepartamento.setText(usuario.getDepartamento());
-        } else {
-            JOptionPane.showMessageDialog(this, "Usuario no encontrado", "Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            txtDepartamento.setText(departamento);
+            txtRol.setText(rol);
+        } catch (Exception ex) {
+            mostrarError("Error al cargar datos del usuario: " + ex.getMessage());
         }
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(this, "Error al cargar datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
 
     private void cambiarContrasena() {
+        String nuevaContrasena = new String(txtContrasena.getText());
+        
+        if (nuevaContrasena.isEmpty()) {
+            mostrarAdvertencia("Por favor ingrese una nueva contraseña");
+            return;
+        }
+        
+        if (nuevaContrasena.length() < 6) {
+            mostrarAdvertencia("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+        
         try {
-            String nuevaContrasena = txtContrasena.getText();
-            if(validarContrasena(nuevaContrasena)) {
-                if(userCRUD.cambiarContrasena(userId, nuevaContrasena)) {
-                    JOptionPane.showMessageDialog(this, "Contraseña actualizada",
-                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                }
+            if (crud.cambiarContrasena(userId, nuevaContrasena)) {
+                mostrarExito("Contraseña actualizada correctamente");
+                txtContrasena.setText("");
+            } else {
+                mostrarError("No se pudo cambiar la contraseña");
             }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException ex) {
+            mostrarError("Error al cambiar contraseña: " + ex.getMessage());
         }
     }
-
-    private boolean validarContrasena(String contrasena) {
-        if(contrasena.length() < 6) {
-            JOptionPane.showMessageDialog(this, "Mínimo 6 caracteres",
-                "Validación", JOptionPane.WARNING_MESSAGE);
-            return false;
-        }
-        return true;
+    
+    // Métodos auxiliares para mostrar mensajes
+    private void mostrarError(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    private void mostrarAdvertencia(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Advertencia", JOptionPane.WARNING_MESSAGE);
+    }
+    
+    private void mostrarExito(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Éxito", JOptionPane.INFORMATION_MESSAGE);
     }
 
     @SuppressWarnings("unchecked")
@@ -234,6 +262,7 @@ public class FromPerfil extends javax.swing.JFrame {
 
     private void btnCambiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCambiarActionPerformed
         cambiarContrasena();
+        this.dispose();
     }//GEN-LAST:event_btnCambiarActionPerformed
 
     /**
@@ -264,8 +293,31 @@ public class FromPerfil extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(FromPerfil.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(FromPerfil.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(FromPerfil.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(FromPerfil.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> {
-            new FromPerfil().setVisible(true);
+            try {
+                new FromPerfil().setVisible(true);
+            } catch (SQLException ex) {
+                Logger.getLogger(FromPerfil.class.getName()).log(Level.SEVERE, null, ex);
+            }
         });
     }
 

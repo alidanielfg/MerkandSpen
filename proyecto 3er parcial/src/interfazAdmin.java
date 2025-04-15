@@ -13,15 +13,41 @@ import javax.swing.JOptionPane;
  * @author alida
  */
 public class interfazAdmin extends javax.swing.JFrame {
-    private UserCRUD crud;
-    /**
-     * Creates new form interfazAdmin
-     */
+    private CRUD crud;
+    private int userId; // Nuevo atributo
+    private String departamento;
+
+    // Constructor modificado
     public interfazAdmin() throws SQLException {
+    Sesion sesion = Sesion.getInstance();
+    
+    try {
+        // Verificar sesión y rol
+        if (!sesion.isActiva() || !"admin".equalsIgnoreCase(sesion.getRol())) {
+            JOptionPane.showMessageDialog(null, 
+                "Acceso no autorizado. Se requiere rol de administrador.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            sesion.cerrarSesion();
+            new login().setVisible(true);
+            this.dispose();
+            return;
+        }
+        
+        this.userId = sesion.getUserId();
+        this.departamento = sesion.getDepartamento();
+        this.crud = new CRUD();
+        
         initComponents();
         setLocationRelativeTo(null);
-        crud = new UserCRUD();
+        setTitle("Administrador: " + departamento);
+    } catch (IllegalStateException e) {
+        JOptionPane.showMessageDialog(null, 
+            "Sesión no válida. Redirigiendo al login...", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        new login().setVisible(true);
+        this.dispose();
     }
+}
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -37,7 +63,7 @@ public class interfazAdmin extends javax.swing.JFrame {
         btnPedidos = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jPanel1.setBackground(new java.awt.Color(137, 166, 124));
 
@@ -153,22 +179,35 @@ public class interfazAdmin extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnAdminUsuaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAdminUsuaActionPerformed
-        new adminUsuarios().setVisible(true);
+        try {
+            new FormAdminUsuarios(0).setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnAdminUsuaActionPerformed
 
     private void btnInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventarioActionPerformed
-        new Inventario().setVisible(true);
+        try {
+            new Inventario().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();// TODO add your handling code here:
     }//GEN-LAST:event_btnInventarioActionPerformed
 
     private void btnPerfilActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPerfilActionPerformed
-        new FromPerfil().setVisible(true);
+                                     
+        try {
+            new FromPerfil().setVisible(true); // Pasar userId y crud
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_btnPerfilActionPerformed
 
     private void btnCierreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCierreActionPerformed
     try {
-        crud.cerrar();
+        crud.cerrarConexion();
 
         this.dispose();
     } catch (Exception e) {
@@ -178,16 +217,28 @@ public class interfazAdmin extends javax.swing.JFrame {
             JOptionPane.ERROR_MESSAGE);
     }
     
-    new login().setVisible(true);
+        try {
+            new login().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_btnCierreActionPerformed
 
     private void btnPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPedidosActionPerformed
-        new FormAdmiSoli().setVisible(true);
+        try {
+            new FormAdmiSoli().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_btnPedidosActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        new FormRegistroArticulo().setVisible(true);
+        try {
+            new FormRegistroArticulo().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        }
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -220,14 +271,37 @@ public class interfazAdmin extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    new interfazAdmin().setVisible(true);
-                } catch (SQLException ex) {
-                    Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+        public void run() {
+            try {
+                // Verificar sesión
+                Sesion sesion = Sesion.getInstance();
+                if (!sesion.isActiva()) {
+                    JOptionPane.showMessageDialog(null,
+                        "Debe iniciar sesión primero",
+                        "Sesión requerida", JOptionPane.WARNING_MESSAGE);
+                    new login().setVisible(true);
+                    return;
                 }
+                
+                // Verificar rol de administrador
+                if (!"admin".equalsIgnoreCase(sesion.getRol())) {
+                    JOptionPane.showMessageDialog(null,
+                        "Acceso restringido a administradores",
+                        "Permiso denegado", JOptionPane.ERROR_MESSAGE);
+                    new interfazUsuario().setVisible(true); // Redirigir a interfaz de usuario
+                    return;
+                }
+                
+                // Si todo está bien, mostrar la interfaz
+                new interfazAdmin().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(interfazAdmin.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null,
+                    "Error al iniciar la interfaz: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
+        }
+    });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

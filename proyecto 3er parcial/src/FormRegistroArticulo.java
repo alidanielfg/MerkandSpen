@@ -7,12 +7,15 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+
 public class FormRegistroArticulo extends javax.swing.JFrame {
+    private CRUD crud;
     
-    public FormRegistroArticulo() {
+    public FormRegistroArticulo() throws SQLException {
         initComponents();
         setLocationRelativeTo(null);
         cargarCategorias();
+        crud = new CRUD();
     }
 
     private void cargarCategorias() {
@@ -169,36 +172,31 @@ public class FormRegistroArticulo extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
-    String nombre = txtNombre.getText();
-    String descripcion = txtDescripcion.getText();
-    String cantidadStr = txtCantidad1.getText();
-    String categoria = comboCategoria.getSelectedItem().toString();
-       
+        String nombre = txtNombre.getText();
+        String descripcion = txtDescripcion.getText();
+        String cantidadStr = txtCantidad1.getText();
+        String categoria = comboCategoria.getSelectedItem().toString();
+           
         if(nombre.isEmpty() || descripcion.isEmpty() || cantidadStr.isEmpty()){
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios", "Error", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-    CRUD crud= new CRUD();
-        boolean status=crud.RegistrarArticulo(nombre, descripcion, cantidadStr, categoria);
         
-        if (status){
-         JOptionPane.showMessageDialog(this, "Articulo Registrado", "Exito", JOptionPane.INFORMATION_MESSAGE);
-        }
-        else {
-            JOptionPane.showMessageDialog(this, "No se Registro", "Error", JOptionPane.INFORMATION_MESSAGE);
+        boolean status = crud.registrarArticulo(nombre, descripcion, cantidadStr, categoria);
+        
+        if (status) {
+            JOptionPane.showMessageDialog(this, "Artículo Registrado", "Exito", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No se Registró", "Error", JOptionPane.INFORMATION_MESSAGE);
         }
         limpiarCampos();
     }                                          
 
-    private void limpiarCampos(){
+    private void limpiarCampos() {
         txtNombre.setText("");
         txtDescripcion.setText("");
         txtCantidad1.setText("");
         comboCategoria.setSelectedIndex(0);
-
-
-    
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void comboCategoriaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboCategoriaActionPerformed
@@ -244,7 +242,11 @@ public class FormRegistroArticulo extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new FormRegistroArticulo().setVisible(true);
+                try {
+                    new FormRegistroArticulo().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(FormRegistroArticulo.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }

@@ -3,84 +3,59 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class FormSolicitarArti extends javax.swing.JFrame {
-
     private CRUD crud;
+    private int idUsuarioActual;
     
-    public FormSolicitarArti() {
+    
+    public FormSolicitarArti(int userId) throws SQLException {       
+        this.idUsuarioActual = userId;
         initComponents();
-        verificarConexion();
-        setLocationRelativeTo(null);
+        crud = new CRUD();
+    try {
+        Sesion sesion = Sesion.getInstance();
+        
+        if (!sesion.isActiva() || sesion.getUserId() != userId) {
+            JOptionPane.showMessageDialog(null, 
+                "Sesión no válida o expirada", 
+                "Error de sesión", JOptionPane.ERROR_MESSAGE);
+            sesion.cerrarSesion();
+            new login().setVisible(true);
+            this.dispose();
+            return;
+        }
+
         cargarArticulos();
+        setLocationRelativeTo(null);
+        
+    } catch (SQLException ex) {
+        Logger.getLogger(FormSolicitarArti.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(null,
+            "Error de conexión con la base de datos",
+            "Error", JOptionPane.ERROR_MESSAGE);
+        System.exit(1);
     }
+}
     
     private void cargarArticulos() {
         comboArticulos.removeAllItems();
         comboArticulos.addItem("-- Seleccione un artículo --");
         
-        Connection conexion = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        
         try {
-            conexion = ConexionDB.conectar();
-            if(conexion == null) {
-                JOptionPane.showMessageDialog(this, "No hay conexión a la base de datos", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            String sql = "SELECT id, nombre FROM articulos ORDER BY nombre";
-            ps = conexion.prepareStatement(sql);
-            rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                comboArticulos.addItem(rs.getString("nombre"));
+            for (CRUD.Articulo articulo : crud.obtenerArticulos()) {
+                comboArticulos.addItem(articulo.getNombre());
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al cargar artículos: " + e.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
-        } finally {
-            try {
-                if (rs != null) rs.close();
-                if (ps != null) ps.close();
-                if (conexion != null) conexion.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
-    }
-    
-    private void verificarConexion() {
-        Connection conexion = null;
-        try {
-            conexion = ConexionDB.conectar();
-            if(conexion == null) {
-                JOptionPane.showMessageDialog(this, "No se pudo establecer conexión con la base de datos", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } finally {
-            if (conexion != null) {
-                try {
-                    conexion.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-   
+    }   
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -97,7 +72,7 @@ public class FormSolicitarArti extends javax.swing.JFrame {
         btnInventario = new javax.swing.JMenuItem();
         btnPerfil = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Yu Gothic UI Semibold", 1, 18)); // NOI18N
         jLabel1.setText("Solicitar Articulo ");
@@ -196,7 +171,7 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnPedirArtiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPedirArtiActionPerformed
-        if(comboArticulos.getSelectedIndex() <= 0) {
+         if(comboArticulos.getSelectedIndex() <= 0) {
         JOptionPane.showMessageDialog(this, "Debe seleccionar un artículo", 
             "Error", JOptionPane.ERROR_MESSAGE);
         return;
@@ -205,82 +180,71 @@ public class FormSolicitarArti extends javax.swing.JFrame {
     String articulo = comboArticulos.getSelectedItem().toString();
     String cantidad = txtCantidad.getText().trim();
     
-    if(cantidad.isEmpty()){
+    if(cantidad.isEmpty()) {
         JOptionPane.showMessageDialog(this, "La cantidad es obligatoria", 
             "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
     
-    try {
-        int cant = Integer.parseInt(cantidad);
-        if(cant <= 0) {
-            JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a cero", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        int idArticulo = obtenerIdArticulo(articulo);
-        if(idArticulo == -1) {
-            JOptionPane.showMessageDialog(this, "Error al obtener artículo", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        int idUsuario = 1;
-        
-        CRUD crud = new CRUD();
-        boolean status = crud.SolicitarArtinombre(idUsuario, idArticulo, cantidad);
-        
-        if (status) {
-            JOptionPane.showMessageDialog(this, "Artículo solicitado correctamente", 
-                "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            limpiarCampos();
-        } else {
-            JOptionPane.showMessageDialog(this, "No se pudo solicitar el artículo", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "La cantidad debe ser un número válido", 
-            "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    } 
-    
-    private int obtenerIdArticulo(String nombreArticulo) {
-    Connection conexion = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
-    
-    try {
-        conexion = ConexionDB.conectar();
-        String sql = "SELECT id FROM articulos WHERE nombre = ?";
-        ps = conexion.prepareStatement(sql);
-        ps.setString(1, nombreArticulo);
-        rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            return rs.getInt("id");
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    } finally {
         try {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (conexion != null) conexion.close();
+            int cant = Integer.parseInt(cantidad);
+            if(cant <= 0) {
+                JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a cero", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int idArticulo = obtenerIdArticulo(articulo);
+            if(idArticulo == -1) {
+                JOptionPane.showMessageDialog(this, "Error al obtener artículo", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Verificar stock antes de mostrar mensaje de éxito
+            CRUD.Articulo art = crud.obtenerArticuloPorId(idArticulo);
+            if (art == null || art.getStock() < cant) {
+                JOptionPane.showMessageDialog(this, 
+                    "Stock insuficiente. Disponible: " + (art != null ? art.getStock() : 0), 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            boolean status = crud.solicitarArticulo(idUsuarioActual, idArticulo, cantidad);
+
+            if (status) {
+                JOptionPane.showMessageDialog(this, "Artículo solicitado correctamente", 
+                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                limpiar();
+                cargarArticulos();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "La cantidad debe ser un número válido", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al solicitar artículo: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btnPedirArtiActionPerformed
+private int obtenerIdArticulo(String nombreArticulo) {
+        try {
+            for (CRUD.Articulo articulo : crud.obtenerArticulos()) {
+                if (articulo.getNombre().equals(nombreArticulo)) {
+                    return articulo.getId();
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return -1;
     }
-    return -1;
-}
-
-    private void limpiarCampos(){
-        comboArticulos.setSelectedIndex(0);
-        txtCantidad.setText("");
-    }//GEN-LAST:event_btnPedirArtiActionPerformed
 
     private void btnInventarioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventarioActionPerformed
-       new InventarioUsua().setVisible(true);
+        try {
+            new InventarioUsua().setVisible(true);
+        } catch (SQLException ex) {
+            Logger.getLogger(FormSolicitarArti.class.getName()).log(Level.SEVERE, null, ex);
+        }
        this.dispose();
     }//GEN-LAST:event_btnInventarioActionPerformed
 
@@ -292,7 +256,9 @@ public class FormSolicitarArti extends javax.swing.JFrame {
         }
         this.dispose();
     }//GEN-LAST:event_btnPerfilActionPerformed
-
+private void limpiar(){
+        txtCantidad.setText("");
+    }
     /**
      * @param args the command line arguments
      */
@@ -322,11 +288,31 @@ public class FormSolicitarArti extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FormSolicitarArti().setVisible(true);
+        public void run() {
+            try {
+                // Verificar sesión
+                Sesion sesion = Sesion.getInstance();
+                if (!sesion.isActiva()) {
+                    JOptionPane.showMessageDialog(null,
+                        "Debe iniciar sesión primero",
+                        "Sesión requerida", JOptionPane.WARNING_MESSAGE);
+                    new login().setVisible(true);
+                    return;
+                }
+                
+                int userId = sesion.getUserId();
+               
+                // Mostrar formulario con el ID de usuario válido
+                new FormSolicitarArti(userId).setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(FormSolicitarArti.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null,
+                    "Error al iniciar el formulario: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
-    }
+        }
+    });
+}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem btnInventario;

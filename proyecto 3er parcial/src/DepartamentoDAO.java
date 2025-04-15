@@ -5,7 +5,7 @@ import java.util.List;
 public class DepartamentoDAO {
     private final Connection conexion;
     
-    public DepartamentoDAO() {
+    public DepartamentoDAO() throws SQLException {
         this.conexion = ConexionDB.conectar();
     }
     
