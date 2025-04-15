@@ -316,86 +316,36 @@ public class CRUD {
         }
 
         // ------------------------- CRUD: Pedidos -------------------------
-            public boolean solicitarArticulo(int idUsuario, int idArticulo, String cantidadStr) {
-                try {
-            // Convertir la cantidad a entero
-            int cantidad = Integer.parseInt(cantidadStr);
-
-            // Verificar que el usuario existe en la base de datos
-            if (!verificarUsuarioExiste(idUsuario)) {
-                JOptionPane.showMessageDialog(null,
-                    "Error: El ID de usuario no existe en la base de datos",
-                    "Error de validación", 
-                    JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            // Verificar stock disponible
-            Articulo articulo = obtenerArticuloPorId(idArticulo);
-            if (articulo == null) {
-                JOptionPane.showMessageDialog(null,
-                    "Artículo no encontrado",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            // Verificar stock antes de proceder
-            if (!articuloDAO.verificarStockDisponible(idArticulo, cantidad)) {
-                boolean stockDisponible = articuloDAO.obtenerStockDisponible(idArticulo);
-                JOptionPane.showMessageDialog(null,
-                    "Stock insuficiente. Disponible: " + stockDisponible,
-                    "Error", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
-            // Iniciar transacción
-            conexion.setAutoCommit(false);
-            try {
-                // Registrar pedido
-                String sqlPedido = "INSERT INTO pedidos (id_usuario, id_articulo, cantidad, fecha_solicitud, id_estatus) " +
-                                  "VALUES (?, ?, ?, CURRENT_TIMESTAMP, (SELECT id FROM estatus WHERE nombre = 'En proceso'))";
-                try (PreparedStatement psPedido = conexion.prepareStatement(sqlPedido)) {
-                    psPedido.setInt(1, idUsuario);
-                    psPedido.setInt(2, idArticulo);
-                    psPedido.setInt(3, cantidad);
-                    psPedido.executeUpdate();
-                }
-
-                // Actualizar inventario
-                if (!articuloDAO.actualizarStock(idArticulo, cantidad)) {
-                    conexion.rollback();
-                    JOptionPane.showMessageDialog(null,
-                        "Error al actualizar el inventario",
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                }
-
-                conexion.commit();
-                JOptionPane.showMessageDialog(null, 
-                    "Solicitud registrada exitosamente", 
-                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                return true;
-            } catch (SQLException e) {
-                conexion.rollback();
-                JOptionPane.showMessageDialog(null,
-                    "Error en la base de datos: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-                return false;
-            } finally {
-                conexion.setAutoCommit(true);
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, 
-                "La cantidad debe ser un número válido", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, 
-                "Error en la base de datos: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
+            public boolean solicitarArticulo(int idUsuario, int idArticulo, String cantidadStr) throws SQLException {
+    try {
+        int cantidad = Integer.parseInt(cantidadStr);
+        
+        // Verificar stock primero
+        Articulo articulo = obtenerArticuloPorId(idArticulo);
+        if(articulo == null || articulo.getStock() < cantidad) {
+            throw new SQLException("Stock insuficiente para el artículo ID: " + idArticulo);
         }
+
+        // Insertar pedido
+        String sqlPedido = "INSERT INTO pedidos (id_usuario, id_articulo, cantidad, fecha_solicitud, id_estatus) " +
+                         "VALUES (?, ?, ?, CURRENT_TIMESTAMP, (SELECT id FROM estatus WHERE nombre = 'En proceso'))";
+        try (PreparedStatement psPedido = conexion.prepareStatement(sqlPedido)) {
+            psPedido.setInt(1, idUsuario);
+            psPedido.setInt(2, idArticulo);
+            psPedido.setInt(3, cantidad);
+            psPedido.executeUpdate();
+        }
+
+        // Actualizar inventario
+        if (!articuloDAO.actualizarStock(idArticulo, cantidad)) {
+            throw new SQLException("Error al actualizar inventario para el artículo ID: " + idArticulo);
+        }
+        
+        return true;
+    } catch (NumberFormatException e) {
+        throw new SQLException("Cantidad inválida para el artículo ID: " + idArticulo);
     }
+}
         
     public boolean verificarUsuarioExiste(int idUsuario) throws SQLException {
     String sql = "SELECT id FROM usuarios WHERE id = ?";
