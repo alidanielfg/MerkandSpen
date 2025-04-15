@@ -409,19 +409,24 @@ public class CRUD {
     }
 
     public DefaultCategoryDataset obtenerTopSolicitudes() throws SQLException {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        String sql = "SELECT a.nombre, COUNT(p.id) AS solicitudes " +
-                     "FROM pedidos p JOIN articulos a ON p.id_articulo = a.id " +
-                     "GROUP BY a.nombre ORDER BY solicitudes DESC LIMIT 5";
-        
-        try (PreparedStatement ps = conexion.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                dataset.addValue(rs.getInt("solicitudes"), "Solicitudes", rs.getString("nombre"));
-            }
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    String sql = "SELECT a.nombre, SUM(p.cantidad) AS solicitudes "
+               + "FROM pedidos p JOIN articulos a ON p.id_articulo = a.id "
+               + "GROUP BY a.nombre ORDER BY solicitudes DESC LIMIT 5";
+    
+    try (PreparedStatement ps = conexion.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            // Cambiar el orden de los parámetros para mostrar artículos como categorías
+            dataset.addValue(
+                rs.getInt("solicitudes"), 
+                rs.getString("nombre"),  // Serie = Nombre del artículo
+                "Solicitudes"            // Categoría fija
+            );
         }
-        return dataset;
     }
+    return dataset;
+}
     
     public boolean actualizarEstatusPedido(int idPedido, String nuevoEstatus) throws SQLException {
     String sql = "UPDATE pedidos SET id_estatus = (SELECT id FROM estatus WHERE nombre = ?) WHERE id = ?";

@@ -9,8 +9,13 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import java.sql.ResultSet;
 import java.sql.PreparedStatement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
 
 public class Inventario extends javax.swing.JFrame {
     private CRUD crud;
@@ -63,44 +68,101 @@ public class Inventario extends javax.swing.JFrame {
     }
     
     private void initGrafica() {
-        JFreeChart chart = ChartFactory.createBarChart(
-            "5 Artículos más solicitados",
-            "Artículos",
-            "Solicitudes",
-            new DefaultCategoryDataset(),
-            PlotOrientation.HORIZONTAL,
-            true,
-            true,
-            false
-        );
-        
-        chartPanel = new ChartPanel(chart);
-        chartPanel.setMouseWheelEnabled(true);
-        chartPanel.setPreferredSize(new Dimension(650, 200));
-        
-        jPanel1.setLayout(new BorderLayout());
-        jPanel1.add(chartPanel, BorderLayout.NORTH);
-        
-        pack();
-        repaint();
+    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    
+    JFreeChart chart = ChartFactory.createBarChart(
+        "5 Artículos más solicitados",
+        "Artículos",  // Cambiar eje X
+        "Cantidad de solicitudes",  // Cambiar eje Y
+        dataset,
+        PlotOrientation.HORIZONTAL,
+        true,  // Mostrar leyenda
+        true,
+        false
+    );
+    
+    // Configurar renderer para mostrar nombres
+    CategoryPlot plot = chart.getCategoryPlot();
+    plot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.STANDARD);
+    BarRenderer renderer = (BarRenderer) plot.getRenderer();
+    
+    // Desactivar que todas las barras usen el mismo color (rojo por defecto)
+    renderer.setDrawBarOutline(true);
+    renderer.setShadowVisible(false);
+    
+    // Asignar colores diferentes a cada ítem
+    renderer.setSeriesPaint(0, new Color(65, 105, 225));   // Azul real
+    renderer.setSeriesPaint(1, new Color(50, 205, 50));    // Lima
+    renderer.setSeriesPaint(2, new Color(255, 140, 0));    // Naranja oscuro
+    renderer.setSeriesPaint(3, new Color(153, 50, 204));   // Púrpura
+    renderer.setSeriesPaint(4, new Color(0, 139, 139));    // Cyan oscuro
+    
+    // Aplicar los mismos colores por categoría individual
+    renderer.setDrawBarOutline(true);
+    renderer.setItemMargin(0.1);
+    
+    chartPanel = new ChartPanel(chart);
+    chartPanel.setMouseWheelEnabled(true);
+    chartPanel.setPreferredSize(new Dimension(650, 200));
+    
+    jPanel1.setLayout(new BorderLayout());
+    jPanel1.add(chartPanel, BorderLayout.NORTH);
+    
+    pack();
+    repaint();
+    
+    // Cargar datos iniciales
+    try {
+        actualizarGrafica();
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(null, "Error al cargar datos de la gráfica: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+    
+    private Map<String, Color> coloresArticulos = new HashMap<>();
+private Color[] paletaColores = {
+    new Color(255, 0, 0),    // Rojo
+    new Color(0, 255, 0),    // Verde
+    new Color(0, 0, 255),    // Azul
+    new Color(255, 255, 0),  // Amarillo
+    new Color(255, 0, 255)   // Magenta
+};
+
+private void actualizarGrafica() throws SQLException {
+    DefaultCategoryDataset nuevosDatos = crud.obtenerTopSolicitudes();
+    CategoryPlot plot = chartPanel.getChart().getCategoryPlot();
+    
+    // Mantener colores existentes y asignar nuevos
+    for (int i = 0; i < nuevosDatos.getRowCount(); i++) {
+        String articulo = (String) nuevosDatos.getRowKey(i);
+        if (!coloresArticulos.containsKey(articulo)) {
+            int colorIndex = coloresArticulos.size() % paletaColores.length;
+            coloresArticulos.put(articulo, paletaColores[colorIndex]);
+        }
     }
     
-    private void actualizarGrafica() throws SQLException {
-        DefaultCategoryDataset nuevosDatos = crud.obtenerTopSolicitudes();
-        JFreeChart chart = chartPanel.getChart();
-        chart.getCategoryPlot().setDataset(nuevosDatos);
+    BarRenderer renderer = new BarRenderer();
+    for (int i = 0; i < plot.getDataset().getRowCount(); i++) {
+        renderer.setSeriesPaint(i, coloresArticulos.get(plot.getDataset().getRowKey(i)));
     }
+    
+    plot.setDataset(nuevosDatos);
+    plot.setRenderer(renderer);
+}
     
     private void iniciarActualizacionAutomatica() {
-        timerActualizacion = new Timer(5000, e -> {
-            try {
-                actualizarGrafica();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-        });
-        timerActualizacion.start();
-    }
+    timerActualizacion = new Timer(5000, e -> {
+        try {
+            // Solo actualiza datos sin resetear la gráfica
+            actualizarGrafica();
+            chartPanel.repaint();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    });
+    timerActualizacion.start();
+}
     
     @Override
     public void dispose() {
