@@ -215,27 +215,44 @@ public class CRUD {
     public boolean eliminarArticulo(int idArticulo) {
         try {
             conexion.setAutoCommit(false);
+
+            // 1. Actualizar estado de pedidos asociados
+            actualizarEstatusPedidosPorArticulo(idArticulo, "Articulos no disponibles");
+
+            // 2. Eliminar de inventarios
             String sqlInventario = "DELETE FROM inventarios WHERE id_articulo = ?";
             try (PreparedStatement ps = conexion.prepareStatement(sqlInventario)) {
                 ps.setInt(1, idArticulo);
                 ps.executeUpdate();
             }
 
+            // 3. Eliminar de articulos
             String sqlArticulo = "DELETE FROM articulos WHERE id = ?";
             try (PreparedStatement ps = conexion.prepareStatement(sqlArticulo)) {
                 ps.setInt(1, idArticulo);
-                if (ps.executeUpdate() > 0) {
+                int rowsAffected = ps.executeUpdate();
+                if (rowsAffected > 0) {
                     conexion.commit();
                     return true;
+                } else {
+                    conexion.rollback();
+                    return false;
                 }
             }
-            conexion.rollback();
-            return false;
         } catch (SQLException e) {
             try { conexion.rollback(); } catch (SQLException ex) {}
             return false;
         } finally {
             try { conexion.setAutoCommit(true); } catch (SQLException e) {}
+        }
+    }
+    
+    public void actualizarEstatusPedidosPorArticulo(int idArticulo, String nuevoEstatus) throws SQLException {
+        String sql = "UPDATE pedidos SET id_estatus = (SELECT id FROM estatus WHERE nombre = ?) WHERE id_articulo = ?";
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstatus);
+            ps.setInt(2, idArticulo);
+            ps.executeUpdate();
         }
     }
 

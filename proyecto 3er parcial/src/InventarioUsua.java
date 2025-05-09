@@ -154,19 +154,25 @@ public class InventarioUsua extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSolicitarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSolicitarActionPerformed
-        try {
-            new FormSolicitarArti(0).setVisible(true);
-        } catch (SQLException ex) {
-            Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
+         try {
+        Sesion sesion = Sesion.getInstance();
+        if (!sesion.isActiva()) {
+            JOptionPane.showMessageDialog(this, "Sesión no activa", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        this.dispose();
+        int userId = sesion.getUserId();
+        new FormSolicitarArti(userId).setVisible(true);
+    } catch (SQLException ex) {
+        Logger.getLogger(InventarioUsua.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    this.dispose();
     }//GEN-LAST:event_btnSolicitarActionPerformed
 
     private void btnBuscarNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarNombreActionPerformed
        String nombreBusqueda = txtArticulo.getText().trim();
             
         if(nombreBusqueda.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            JOptionPane.showMessageDialog(null, 
                 "Debe ingresar un nombre para buscar", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
@@ -190,13 +196,13 @@ public class InventarioUsua extends javax.swing.JFrame {
             }
             
             if(!encontrado) {
-                JOptionPane.showMessageDialog(this, 
+                JOptionPane.showMessageDialog(null, 
                     "No se encontraron artículos con ese nombre", 
                     "Información", 
                     JOptionPane.INFORMATION_MESSAGE);
             }
         } catch(SQLException ex) {
-            JOptionPane.showMessageDialog(this, 
+            JOptionPane.showMessageDialog(null, 
                 "Error al buscar en la base de datos: " + ex.getMessage(), 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
